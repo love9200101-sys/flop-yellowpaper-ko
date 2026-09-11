@@ -1,0 +1,51 @@
+{
+ "source": {
+  "work": "FLOP Network Yellow Paper",
+  "version": "0.5.0 (draft)",
+  "publisher": "FLOP Labs",
+  "copyright": "Copyright (c) 2026 FLOP Labs",
+  "repository": "https://github.com/flop-labs/yellowpaper",
+  "commit": "3eaf2f25bc46a501df225cae4e4e991975f6b2a9",
+  "file": "yellowpaper.md",
+  "raw_url": "https://raw.githubusercontent.com/flop-labs/yellowpaper/3eaf2f25bc46a501df225cae4e4e991975f6b2a9/yellowpaper.md",
+  "sha256": "cb414e5cdfe72eec048102720c0ebff5e25b00d8910ae2affe137746b59c8ea9",
+  "bytes": 248811,
+  "license": "CC-BY-4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "retrieved": "2026-09-11"
+ },
+ "translation": {
+  "language": "ko",
+  "official": false,
+  "normative": false,
+  "changes": "Translated from English into Korean. Code spans, parameter names, requirement and decision identifiers, numbers, formulas, byte layouts, anchors and RFC 2119 keywords are reproduced verbatim; only human-language text is translated.",
+  "sections": [
+   "00-front.md",
+   "01-0-Conformance-Reading-Guide.md",
+   "02-1-Notation-Conventions-Glossary.md",
+   "03-2-Consensus.md",
+   "04-3-Proof-of-Useful-Inference-Verification-Architect.md",
+   "05-4-Effective-FLOP-Metering.md",
+   "06-5-On-chain-Off-chain-Architecture-Sizing.md",
+   "07-6-Base-Layer-Primitives-Agent-Autonomy.md",
+   "08-7-Hardware-Calibration-Drift.md",
+   "09-8-Performance-Locked-Vesting.md",
+   "10-9-Emission-Supply.md",
+   "11-10-HTLC-Atomic-Swap.md",
+   "12-11-Security-Invariants.md",
+   "13-12-Agents-as-Market-Actors-Sessions-Settlement.md",
+   "14-13-Failure-Semantics-Actor-Failure-Matrix.md",
+   "15-14-Governance-Protocol-Upgrades.md",
+   "16-15-Validators-Onboarding-Duties-Selection-Rotation.md",
+   "17-Appendix-A-Parameter-Reference.md",
+   "18-Appendix-B-Sources.md",
+   "19-Appendix-C-Miner-Lifecycle-End-to-End.md",
+   "20-Appendix-D-Fee-Revenue-Map.md",
+   "21-Appendix-E-Open-Specification-Items.md",
+   "22-Appendix-F-Message-Storage-Formats.md",
+   "23-Appendix-G-Extrinsic-Index.md",
+   "24-Appendix-H-Conformance-Implementation-Status-Matri.md",
+   "25-Appendix-I-Runtime-Composition.md"
+  ]
+ }
+}
