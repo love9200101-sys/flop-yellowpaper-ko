@@ -20,7 +20,7 @@
 
 | 요구사항 | 규칙 |
 |-------------|------|
-| 자기 스테이크 | `≥ effective_minimum_stake() = max(`[`validator_min_stake`](#param-validator_min_stake)`, ValueCoupledStakeFloor)`; 기준선 305,505 FLOP, 연 +9% 복리 |
+| 자기 스테이크 | `≥ effective_minimum_stake() = max(`[`validator_min_stake`](#param-validator_min_stake)`, ValueCoupledStakeFloor)`; 기준선 [`validator_min_stake`](#param-validator_min_stake), 연 +9% 복리 |
 | 자기 스테이크 비율 | 자기 스테이크는 **MUST** (자기 + 위임된) 스테이크의 ≥ 20%여야 한다(`MinSelfStakeRatio`) |
 | 엔티티별 슬롯 | ≤ 5(`MaxSlotsPerEntity`) |
 | 블랙리스트 미등재 | 사기로 블랙리스트된 계정은 **MUST NOT** 재등록해서는 안 된다 |
@@ -36,7 +36,7 @@
 | BABE 블록 작성 | 경량 CPU; 지연 민감 가십 | 보상 + Liveness 슬래시(V1) |
 | AlephBFT 파이널리티 투표 | 경량 CPU; BFT 투표 가십 O(committee) | 보상 지분 + Equivocation 슬래시(V2) |
 | 검증자 어테스테이션(TEE 인용 검증 → 공동 서명) | DCAP/dstack 검증(경량 CPU + 어테스테이션 컬래터럴(collateral) 페치) | 쿼럼 2/3(§3.6); 선택적 어테스테이션 **[GAP]** O3 |
-| DA 저장 및 서빙 | Reed–Solomon 레이트 ½(`R=6`, k=3+3); GB 규모 대역폭 | 서빙 아니면 슬래시(serve-or-slash) 감사; 보상 지분으로 재원 조달, **바이트당 수수료 없음** |
+| 프로토콜 DA 저장 및 서빙(§5.3) | Reed–Solomon 레이트 ½(`R=6`, k=3+3); GB 규모 대역폭 | 서빙 아니면 슬래시(serve-or-slash) 감사; 보상 지분으로 재원 조달, **바이트당 수수료 없음** |
 | 회수 가능성 / 고스트 태스크 감사 | 경량(정답이 알려진 방식) | 보유 결합(V3/V10) |
 | 검증 의무 — 어테스테이션, 쿼럼 공동 서명, 감사 응답(위원회 라이브니스, R15.4c) | 경량 CPU | `WorkRecencyWindow` 내에 수락된 의무가 없으면 위원회에서 탈락 |
 | 샘플링 재실행(TOPLOC 프리필 재생) | **검증자 의무 아님** — 체커 레인(R3.5d) | 검증자는 판정을 검증하고 공동 서명 |
@@ -48,14 +48,22 @@
 보존 기간 하의 DA 보관(custody)), 1 Gbps 대칭 무제한(unmetered) 링크 — AlephBFT급 노드 참조 사양에 스토리지를
 더한 것이다.
 
+배치는 개별 장비가 아니라 집합 수준의 문제이다. R2.3은 비잔틴 **의석**을 세므로,
+validator-set-diversity.md의 장애 도메인 규칙이
+프로덕션 검증자에게 적용된다 — 기계당 세션 키 하나, 공유 키 페일오버 금지, 그리고 어떤 호스팅 ASN, 대도시권,
+운영 그룹도 실현된 위원회 크기에서 `3f < n`(R2.3)을 깨뜨리는 비잔틴 의석 수 — 100석 위원회에 대해서는 34 —
+만큼의 적격 검증자를 보유하지 않을 것. 의석은 결코 신원 수를 넘지 않기 때문이다. 신원 수와 스테이크에 대한
+더 엄격한 도메인당 10 % 상한이 D-0507에서 제안되어 있다(보류 중).
+
 ### 15.4 선출 — PoUI로 게이팅된 위원회
 
 - **R15.4a.** 파이널리티 위원회는 **MUST** `ActiveValidators`를 `effective_minimum_stake()` **그리고** 최근
   수락된 검증 의무(R15.4c; 스테이크 **그리고** 검증 라이브니스 — §2.3 하위 증명 1 및 3)를 충족하는
   검증자로 필터링한 뒤, **BABE-VRF** 시드로부터 [`finality_committee_size`](#param-finality_committee_size) =
   100명의 서로 다른 구성원을 **스테이크 가중 비복원 추출**로 무작위 샘플링하여 구성되어야 한다
-  (`hp_consensus::sample_committee_weighted`). `pallet_aleph`는 매 에포크 이 위원회를 스냅숏하고
-  `authorities()`를 `finality-aleph`에 노출한다.
+  (`hp_consensus::sample_committee_weighted`). `pallet_aleph`는 매 세션 이 위원회를 스냅숏하고
+  (`AlephEpochBlocks` = 900 블록; 프로덕션 BABE 에포크당 세션 4개) `authorities()`를 `finality-aleph`에
+  노출한다.
 - **R15.4b.** 샘플링 시드는 **MUST** BABE-VRF 에포크 무작위성(에포크 동안 고정, 한 에포크 이전 값)이어야
   하며, 로테이션별로 도메인 분리되어야 한다. 이는 현재 블록 작성자의 영향을 지연시키고 제한하지만, 그
   자체로 비편향성을 증명하지는 않는다. 시드 영향 및 반복 추출 분석은 E.42이다.
@@ -79,6 +87,11 @@
 복합 성능 점수 = 40% uptime + 30% block_rate + 20% accuracy + 10% latency
 ([`performance_score_weights`](#param-performance_score_weights)); 이는 로테이션 하한의 입력이다.
 
+비준 대기 중(v0.5 결정 기록): [D-0508](decisions/v0.5.md#d-0508--rotation-on-underperformance-floor-based-ejection-and-on-chain-performance-signal)은
+네 구성요소를 온체인에서 관측 가능한 신호로 재정의하고 root 오리진 점수 오라클을 폐지한다.
+[D-0509](decisions/v0.5.md#d-0509--committee-session-cadence-aligned-to-the-babe-epoch)는
+900블록 위원회 세션을 BABE 에포크에 맞추게 된다.
+
 ### 15.5 로테이션과 집합 크기
 
 로테이션은 `on_initialize`에서 매
@@ -101,7 +114,12 @@
 
 **집합 크기.** 활성 집합은 **1,000**으로 상한이 설정된다; **파이널라이즈 위원회는 100**(§15.4)이며 활성
 집합에서 샘플링되므로, 둘은 별개의 한계이다. 상한 미만의 실효 집합 크기는 로테이션 처리량과 스테이크
-게이트에 의해 결정된다.
+게이트에 의해 결정된다. 활성 집합이 방출 수 이하일 때의 동작은 E.56이다.
+
+메인넷 제네시스 시점의 첫 활성 집합 구성(테스트넷 이후 검증 라이브니스 기준 순위, 배치 신고, 도메인당 10 %
+상한)과, 고정 하위 50 방출에서 성능 하한으로의 전환은 비준 대기 중인 제안이다:
+[D-0507](decisions/v0.5.md#d-0507--post-testnet-genesis-validator-selection-and-placement-admission),
+[D-0508](decisions/v0.5.md#d-0508--rotation-on-underperformance-floor-based-ejection-and-on-chain-performance-signal).
 
 ### 15.6 세션 생명주기 전반에서의 검증자
 
@@ -125,20 +143,24 @@
 
 ### 15.7 슬래싱과 복구
 
-`pallet_validators`는 단일 처벌 권한이다(§11.3 표). 사기(Collusion / Equivocation /
-EvidenceForgery / TeeAttestationFailure) = 100% 소각 + 방출 + 블랙리스트; Liveness = 1% + 제일(jail); 장기
-다운타임 = 5% + 퇴출. 상관 이중 서명(equivocation)은 복구 가능 곡선을 따른다.
+`pallet_validators`는 단일 처벌 권한이다(§11.3 표). 사기(Collusion / EvidenceForgery /
+TeeAttestationFailure) = 100% 소각 + 방출 + 블랙리스트. 이중 서명(Equivocation)은 상관 곡선을 따른다. 단독
+위반은 50%를 소각하고 나머지 50%를 180 d 후 반환하며, 검증자를 방출하되 재스테이크는 가능하다. ≥⅓ 상관
+이중 서명은 100%를 소각하고 방출하며 블랙리스트에 올린다. Liveness = 1% + 제일(jail); 장기
+다운타임 = 5% + 퇴출.
 [`validator_unbonding_blocks`](#param-validator_unbonding_blocks) = 21 d이며 세션/분쟁/감사가 열려 있는 동안
-슬래시 락이 적용되고, 이는 14 d DA 보존 기간 `W`보다 안전한 여유를 두고 크다.
+슬래시 락이 적용된다(D-0419). 쿨다운은 14 d DA 보존 기간 `W`보다 길며, 전체 분쟁 생명주기에 대한 그 구성은
+E.57이다.
 
 ### 근거 및 출처 *(비규범적)*
 
 출처: `D-0408`(단일 검증자 스테이킹 시스템), `D-0413`(가치 연동 하한), `D-0416`
-(스테이크 순 로테이션), `D-0437`(활성 집합 상한), `D-0409`/`D-0419`/`D-0420`
-(슬래싱/언본딩), `D-0501`(의석 전제 및 협력적 크레딧 범위), `D-0439`(검증
+(스테이크 순 로테이션), `D-0437`(활성 집합 상한), `D-0409`(일률적 사기 등급), `D-0419`
+(언본딩 슬래시 락), `D-0420`(상관 이중 서명), `D-0501`(의석 전제 및 협력적 크레딧 범위), `D-0439`(검증
 라이브니스; CPU급 검증자). 근거 자료:
 validator-miner-hardware-costs.md(§2.1 참조 프로파일
-및 비교 대상), miner-validator-economics.md,
+및 비교 대상), validator-set-diversity.md(의석 기준
+배치 한계), miner-validator-economics.md,
 da-sovereign-validator-design.md,
 miner-capacity-stake-calibration.md,
 r2-payment-channel-sessions.md,

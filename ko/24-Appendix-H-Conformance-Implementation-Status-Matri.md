@@ -43,7 +43,11 @@
 | 캐시 인식 정산 할인 | PLANNED |
 | 소버린 DA — 온체인 프로토콜 + `DataRef` 배관 | LIVE |
 | 소버린 DA — 오프체인 검증자 서비스(RS 인코딩/서빙/감사) | PARTIAL |
-| 바이트당 DA 수수료 없음; 서빙 아니면 슬래싱; 리스된 가중치 + 환급 가능 보증금 | LIVE |
+| 프로토콜 DA 의무; 서빙 아니면 슬래싱; 리스된 가중치 + 환급 가능 보증금(§5.3) | LIVE |
+| 유료 암호화 에이전트 객체, 메모리 헤드, 권한(capabilities), 스토리지 에스크로, 회수 바우처(§5.4) | PLANNED; ACTIVATION BLOCKED(E.54/E.47에 의해 차단) |
+| 유료 스토리지 Lean 회계, 권한, 과거 책임(historical-liability) 불변식(§5.4) | PLANNED; 기존 프로토콜 DA 정리들은 이 주장들을 입증하지 않음 |
+| 유료 스토리지 Quint 수명 주기, 공격자, 적합성 모델(§5.4) | PLANNED; 유료 스토리지 모델 결과는 아직 없음 |
+| 유료 스토리지 에이전트/검증자 시장 및 지급 능력 시뮬레이션(§5.4) | PLANNED; 보정된 스토리지 시장 결과는 아직 없음 |
 | 리오그 안전 인덱서 서빙(파이널라이즈된 접두 구간) | PARTIAL |
 
 ### H.4 기본 요소, 캘리브레이션, 베스팅, 발행(§6–§9)
@@ -53,7 +57,7 @@
 | balances/multisig/proxy/staking/delegation/vesting | LIVE |
 | 용량 비례 마이너 자기 스테이크(선형, 상한 없음) | LIVE(값은 잠정적) |
 | 선언적 지출 조건 계층; N자 간 에스크로; 권한(capabilities) | PLANNED |
-| 에이전트 세션 키 + 상한 + 회로 차단기 | LIVE |
+| 에이전트 세션 키 + 상한 + 회로 차단기 | LIVE(차단기 작동 래치는 PARTIAL: 거부된 호출과 함께 롤백됨, R6.2c) |
 | 10분 벤치마크 진입(SOFT/HARD), 보증금 우선 | LIVE |
 | 다중 GPU `(SKU,count)` 인벤토리 + 집계 HARD 상한 | LIVE |
 | 7일 리스; 재시작/만료 갱신 감독자 | LIVE |
@@ -61,7 +65,7 @@
 | 레거시 3단계 다이노(dyno) | REMOVED |
 | 통계적 롤링 성능 저하/하향 조정 | PLANNED |
 | 드리프트: EWMA/관리도 + MLPerf 상한 | PLANNED |
-| 성능 잠금 베스팅 `R_p²` + 블랙아웃 | LIVE |
+| 성능 잠금 베스팅 `R_p²` + 블랙아웃 | LIVE(Root `force_create_grant`는 §7 기준선을 우회함) |
 | 고스트 태스크: 암호화된 발행 + 알려진 답 정확성 카나리 | LIVE |
 | 발행/반감기/보조금/위원회 프리미엄 | LIVE |
 | 트랜잭션 수수료 분배(10 소각 / 90 블록 생성자) | LIVE |
@@ -80,10 +84,12 @@
 | 실패/조기 종료 3자 분배(`φ`) | LIVE |
 | 분쟁 자격(에이전트 + 검증자) | LIVE |
 | 단일 턴을 넘는 재귀적 분쟁 이분 탐색 | PARTIAL |
+| 시장 행위자 공모 탐지기 + 메커니즘 교란(R12.3) | PLANNED |
+| 어테스테이션 중단 시 범위 한정 일시정지(R13.0e / O1) | PLANNED: 설계됨, 미구현 |
 | 세션 재어테스테이션 주기 + 최대 지속 시간 연장 | PLANNED |
 | 태스크별 경로 제거 | LIVE |
 | OpenGov + `protocol_upgrade`(Root) 트랙; 재단 제출 게이트; 디수도(de-sudo) | LIVE(디수도는 제네시스 시점) |
-| 검증자 온보딩/임무/로테이션 | LIVE(스테이크 순 정렬은 PARTIAL) |
+| 검증자 온보딩/임무/로테이션 | LIVE(스테이크 순 정렬은 PARTIAL; 소규모 집합 퇴출은 미결, E.56) |
 | 검증자 슬래싱 표 | LIVE(상관 이중 서명(correlated equivocation) 곡선은 PARTIAL) |
 | V6 검열(FOCIL); V8 고스트 태스크 책임성; O3 어테스테이션 평판; P3 출처 추적(provenance); A8 계정 복구 | PLANNED |
 | 위원회 샘플링 구성의 기계 검사; PQ 암호 | PLANNED/OOS |

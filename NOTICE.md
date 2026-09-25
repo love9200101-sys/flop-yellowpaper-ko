@@ -7,9 +7,9 @@ Creative Commons Attribution 4.0 International License (CC BY 4.0).
     https://github.com/flop-labs/yellowpaper
 
 This repository contains a Korean TRANSLATION of that work, made from
-yellowpaper.md at commit 3eaf2f25bc46a501df225cae4e4e991975f6b2a9
-(SHA-256 cb414e5cdfe72eec048102720c0ebff5e25b00d8910ae2affe137746b59c8ea9),
-retrieved 2026-09-11. The translation is a derivative work and is released
+yellowpaper.md at commit 3c97bbc8d6ba68cf2ea003ab88bc154aafdf105e
+(SHA-256 b09a36d8eca75324152f2084c0cb7b9d21987e12d857445933907a12b0b0c03b),
+retrieved 2026-09-25. The translation is a derivative work and is released
 under the same licence.
 
 SPDX-License-Identifier: CC-BY-4.0

@@ -25,16 +25,17 @@
 라우터를 위한 평판 신호(`FailedAcks`)를 발행한다.
 
 **C.3 수립.** 협조적 경로: RA-TLS 핸드셰이크가 인클레이브를 어테스테이션한 뒤, 에이전트가
-`open_channel(miner, model_hash, measured_root, precision, enclave_key, agent_key, sla, escrow, nonce)`를
+`open_channel(miner, model_hash, measured_root, decode_policy_hash, precision, enclave_key, agent_key, sla, escrow, nonce, settlement_class)`를
 호출한다; 에스크로가 예약되며 이것이 **곧** 가격이다. 퍼미션리스 경로: `force_open(...)`은 채널을
 `PendingAck { ack_deadline = now + AckWindow }` 상태로 둔다; 지명된 마이너는 `force_ack(channel_id,
 enclave_key)`로 수락한다; 그렇지 않으면 `expire_force_open`이 전액을 환불하며, 에스크로가
 [`min_force_open_escrow_for_failed_ack`](#param-min_force_open_escrow_for_failed_ack) 이상인 경우에만
 `FailedAcks`를 기록한다.
 
-**C.4 서빙.** 매 턴마다 인클레이브는 리프 `(session_id ‖ turn_index ‖ H(input) ‖ H(output) ‖
-G_n)`을 진행 중인 머클 누산기에 서명해 넣는다; 에이전트는 출력을 수락하기 전에 이를 검증하고 누적 루트에
-대한 영수증에 맞서명한다. 에이전트가 공동 서명을 거부하면 마이너는 마지막 상호 영수증을 기준으로
+**C.4 서빙.** 매 턴은 오직 부록 F.3에서만 정의되는 서명된 트랜스크립트 리프 해시와 진행 중인 머클 누산기를
+사용한다; V3는 `ChannelDecodePolicies` 마커를 지닌 채널을 위한 현행 TOPLOC 결속 형식이다. 에이전트는
+출력을 수락하기 전에 리프와 누적 루트를 검증하고 부록 F.3의 턴별 에이전트 확인(ack)으로 해당 턴에
+맞서명한다. 에이전트가 공동 서명을 거부하면 마이너는 마지막 상호 영수증을 기준으로
 일방적으로 정산한다. 재어테스테이션은 `k` 턴마다 반복된다(§12.1h).
 
 **C.5 청구.** 종료 시 마이너는 최종 루트, 집계 `G_n`, 마지막 상호 영수증을

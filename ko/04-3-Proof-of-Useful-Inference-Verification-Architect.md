@@ -33,7 +33,7 @@ flowchart TB
 | 티어 | 얻는 것 | 필수 여부 |
 |------|----------|-----------|
 | 1 — TEE 어테스테이션된 결정론적 실행 | 진정한 HW 환경 + 측정된 모델/I-O 바인딩; HARD 보증 티어와 더 높은 가치 상한을 해제 | **선택** (R3.2) |
-| 2 — TOPLOC 활성값 커밋먼트 | 모델/프롬프트/정밀도/디코드 교체에 대한 저렴한 *탐지* | **모든 세션에 필수** (R3.1) |
+| 2 — TOPLOC 활성값 커밋먼트 | 커밋된 프리필 활성값에 대한 모델/프롬프트/정밀도 교체의 저렴한 *탐지*; 디코드 단계 커버리지는 미결이다(E.43) | **모든 세션에 필수** (R3.1) |
 | 3 — 독립 낙관적 재실행 + 슬래싱 / 세션 분쟁 게임 | 침해된 고속 경로에 대한 실질적 방어 | **필수** (R3.3) |
 | 4 — 온체인 정산 + ZK 집계 + 검증자 BFT 쿼럼 | 탈중앙화된 어테스테이션 하의 간결한 파이널라이즈 | **필수** (R3.4) |
 
@@ -51,7 +51,7 @@ flowchart TB
 
 ### 3.4 티어 2 — TOPLOC 활성값 커밋먼트 *(필수 하한)*
 
-TOPLOC은 각 토큰의 마지막 은닉 상태(hidden state)의 상위 128개 값+인덱스를 커밋하며, 이를 다항식 인코딩하여 32 토큰당 약 258바이트로 만든다. 검증기는 단일 프리필을 재실행하고 지수(exponent) 교집합을 비교한 뒤, 가수(mantissa) 오차를 `(model, precision)`별 거버넌스 캘리브레이션 밴드와 비교한다.
+TOPLOC은 각 토큰의 마지막 은닉 상태(hidden state)의 상위 128개 값+인덱스를 커밋하며, 이를 다항식 인코딩하여 32 토큰당 약 258바이트로 만든다. 검증기는 단일 프리필을 재실행하고 지수(exponent) 교집합을 비교한 뒤, 가수(mantissa) 오차를 `(model, precision)`별 거버넌스 캘리브레이션 밴드와 비교한다. 커밋되는 레인과 재실행되는 단계는 프리필이다; 디코드 단계를 커버하고 이를 과금된 토큰 id(`h_ids`)에 바인딩하는 커밋먼트와 검사는 E.43에서 미결이다.
 
 - **R3.4a.** TOPLOC 커밋먼트는 모든 세션에 대해 **MUST** 존재해야 하며(R3.1) 티어 3에 공급하기 위해 DA에 게시되어야 한다. 암호학적 탐지 한계는 추가로 커밋먼트가 챌린지 대상 활성값 벡터를 바인딩하고, 챌린지 난수가 커밋먼트 이후에 고정되며, 오프닝(opening)이 그 커밋먼트에 대해 검사될 것을 요구한다; 종단 간 프로토콜 브리지는 [E.43](#appendix-e--open-specification-items)이다.
 - **R3.4b.** 밴드 판정(adjudication)은 `(model, precision, backend, GPU)` 셀별로 **MUST** 닫힌 상태로 실패해야 한다: 셀의 이기종 하드웨어 활성화 게이트가 통과되기 전까지, 해당 셀은 커밋먼트 필수이지만 판정 비활성(adjudication-inert)이다(묵시적 수락 없음). 두 임계값 정책은 수락 / 에스컬레이션 / 슬래시이다; 중간의 *에스컬레이션* 판정은 [`channel_toploc_escalation_window_blocks`](#param-channel_toploc_escalation_window_blocks) 이내에 에스컬레이션 생애주기로 **MUST** 라우팅되어야 하며, 절대 묵시적 수락으로 가서는 안 된다.
@@ -86,7 +86,7 @@ P(collectible | selected,data,challenge,included,upheld)`이다. 모든 인자�
   quote_verified, event_log_verified, hardware_id_hash)`에 대한 일치를 강제한다; 두 검증 불리언(boolean)이 모두 참일 것을 요구한다; 그리고 `ceil(active_count × validator_attestation_threshold).max(1)`명의 서로 다른 검증자를 요구한다(기본 임계값 [`validator_attestation_threshold`](#param-validator_attestation_threshold) = 2/3, 루트 거버넌스로 조정 가능).
 - **R3.6c.** 쿼럼이 달성되면 체인은 `report_data` 바인딩 + `output_hash` 일치를 **MUST** 검증하고, `gn_weight`를 크레딧하며, `OnProofVerified`를 발생시켜야 한다.
 
-별도의 오라클 레지스트리는 **없다**; 어테스테이션 권한은 이미 합의를 보호하고 있는 BFT 위원회이다. **Aggregate 팔레트**는 검증된 스테이트먼트 해시(`keccak256`)를 도메인별 머클 루트로 수집하여 크로스체인 디스패치에 사용한다; 정산 검증기(Groth16-161 … EZKL-169, TEE-170)는 **zkVerify 집계이며 — 추론을 증명하지 않는다.** 선택적 ZK 스팟 증명은 최고 가치 작업을 커버한다.
+별도의 오라클 레지스트리는 **없다**; 어테스테이션 권한은 이미 합의를 보호하고 있는 활성 검증자들의 BFT 쿼럼이다. **Aggregate 팔레트**는 검증된 스테이트먼트 해시(`keccak256`)를 도메인별 머클 루트로 수집하여 크로스체인 디스패치에 사용한다; 정산 검증기(Groth16-161 … EZKL-169, TEE-170)는 **zkVerify 집계이며 — 추론을 증명하지 않는다.** 선택적 ZK 스팟 증명은 최고 가치 작업을 커버한다.
 
 ### 근거 및 출처 *(비규범적)*
 
@@ -100,8 +100,10 @@ verification-economics-bounds.md,
 dispute-reexecution-tradeoffs.md,
 formal-to-implementation-bridge.md. 밴드 유도:
 toploc-band-derivation.md; 운영 R1–R4:
-toploc-r1-r4-research.md. 티어 3 프리미티브:
+toploc-r1-r4-research.md; R3.4c 대비 디코드 측 적합성 공백:
+decode-substitution-gap.md. 티어 3 프리미티브:
 freivalds-bisection-spec.md,
+commodity-reexecution-reference.md(GPU 선택적 리프 재실행기 후보로서의 tinygrad + Colibri),
 distribution-audit-tier-design.md,
 cheap-miner-hardware-profiles.md,
 claim-then-audit-image-commitments.md. GPU 작업
@@ -109,7 +111,8 @@ claim-then-audit-image-commitments.md. GPU 작업
 batch-work-certificates-spike.md,
 gemm-certificate-format-spec.md,
 kv-commitment-carryover-design.md,
-zk-prover-overhead-audit-lane.md; 스택 거버넌스
+zk-prover-overhead-audit-lane.md,
+zk-audit-settlement-design.md(ZK로 감싼 감사 판정 + 정산 장부 처리, 설계 스파이크); 스택 거버넌스
 verification-scheme-registry.md. 신뢰 표면:
 `docs/trust-surface.md`. 리뷰 증거 및 가정 분류:
 [prepublication-evidence.md](research/prepublication-evidence.md). 조건부 감사 보수, 공유

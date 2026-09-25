@@ -2,7 +2,7 @@
 
 | 파라미터 | 값 |
 |-----------|-------|
-| 총 제네시스 공급 | [`genesis_supply`](#param-genesis_supply) = 3,500,000,000 FLOP (VC 프리민트 없음, 경매 없음) — 세 건의 에어드롭: [`genesis_miner_airdrop`](#param-genesis_miner_airdrop) = 1,200,000,000 · [`genesis_validator_airdrop`](#param-genesis_validator_airdrop) = 305,505,000 · [`genesis_agent_airdrop`](#param-genesis_agent_airdrop) = 1,200,000,000; 여기에 [`genesis_reserve`](#param-genesis_reserve) = 794,495,000 잔여분(생태계/인센티브이며, 에어드롭이 아니다)이 더해진다 |
+| 총 제네시스 공급 | [`genesis_supply`](#param-genesis_supply) = 4,400,000,000 FLOP (VC 프리민트 없음, 경매 없음) — 세 건의 에어드롭: [`genesis_miner_airdrop`](#param-genesis_miner_airdrop) = 1,200,000,000 · [`genesis_validator_airdrop`](#param-genesis_validator_airdrop) = 1,200,000,000 · [`genesis_agent_airdrop`](#param-genesis_agent_airdrop) = 1,200,000,000; 여기에 [`genesis_reserve`](#param-genesis_reserve) = 800,000,000 잔여분(생태계/인센티브이며, 에어드롭이 아니다)이 더해진다 |
 | 에라 0 블록 보상 | [`initial_block_reward`](#param-initial_block_reward) = 96 FLOP/블록 (블록당 고정 파라미터; 스케줄에 따라 반감; 상한 없음) |
 | 분배 | [`miner_share_ppt`](#param-miner_share_ppt) = 75% 마이너 · [`validator_share_ppt`](#param-validator_share_ppt) = 10% 검증자 · [`agent_share_ppt`](#param-agent_share_ppt) = 10% 에이전트 · [`staker_share_ppt`](#param-staker_share_ppt) = 5% 스테이커 (에라 0: 72 · 9.6 · 9.6 · 4.8 FLOP/블록) |
 | 검증자 몫 | 검증자 10% 풀, 스테이크에 비례하여 배분하되 현재 파이널리티 위원회 구성원에게는 [`finality_committee_premium_weight_ppm`](#param-finality_committee_premium_weight_ppm) = 1.1×를 적용한다; 잠금된 스테이크로 자동 복리 적립된다 (검증자 수익의 유동성은 미결 항목 [E.39](#appendix-e--open-specification-items)이다) |
@@ -35,13 +35,17 @@
   [`subsidy_duration_blocks`](#param-subsidy_duration_blocks) = 315,360,000 블록(5개 에라, 약 10년)이다;
   총 발행량 = 63,072,000 × (16 + 8 + 4 + 2 + 1) = 1,955,232,000 FLOP.
 - **R9.4 — 제네시스.** 제네시스는 워크 퍼스트(work-first)다(VC 프리민트 없음, 경매 없음, 팀 배분 없음).
-  [`genesis_supply`](#param-genesis_supply) = 3,500,000,000 FLOP은 정확히 네 개의 제네시스 버킷에만
+  [`genesis_supply`](#param-genesis_supply) = 4,400,000,000 FLOP은 정확히 네 개의 제네시스 버킷에만
   **MUST** 배분되어야 하며 그 밖의 어디에도 배분되어서는 안 된다: 세 건의 에어드롭 —
   [`genesis_miner_airdrop`](#param-genesis_miner_airdrop),
   [`genesis_validator_airdrop`](#param-genesis_validator_airdrop),
-  [`genesis_agent_airdrop`](#param-genesis_agent_airdrop) (합계 2,705,505,000 FLOP) — 그리고 생태계
-  리저브 [`genesis_reserve`](#param-genesis_reserve) = 794,495,000 FLOP이며, 이 리저브는 제네시스
+  [`genesis_agent_airdrop`](#param-genesis_agent_airdrop) (합계 3,600,000,000 FLOP, 각 1,200,000,000) — 그리고 생태계
+  리저브 [`genesis_reserve`](#param-genesis_reserve) = 800,000,000 FLOP이며, 이 리저브는 제네시스
   배분이지만 에어드롭은 **아니다**. 이 넷은 `genesis_supply`와 정확히 일치하도록 **MUST** 합산되어야 한다.
+  검증자 코호트는 정의상 총 본드 —
+  [`validator_min_stake`](#param-validator_min_stake) ×
+  [`validator_active_set_cap`](#param-validator_active_set_cap) — 이므로, 제네시스 파라미터를 정할 때
+  본드 하한을 바꾸면 이 코호트가, 따라서 `genesis_supply`가 함께 움직인다(D-0440).
 - **R9.5 — 위원회 프리미엄.** 검증자 10% 풀은 추론(inference) 할증료나 두 번째 발행으로 증액되어서는
   **MUST NOT** 안 된다. 이 풀은 내부에서
   `stake_i × (1.1 if i ∈ current finality committee else 1.0)` 가중으로 분할되며, 정수 잔돈(dust)은
@@ -53,7 +57,7 @@
   [`tx_fee_burn_percent_live`](#param-tx_fee_burn_percent_live) = 10% 소각(`BurnFees`)이어야 **MUST**
   하며, 블록 작성자는 소각되지 않은 잔액의
   [`tx_fee_author_share_percent_live`](#param-tx_fee_author_share_percent_live) = 100%를 수령한다
-  (회계상으로는 마이너별 `G_n` 수수료 귀속이 마이너 몫을 분할하기 전까지 80 ppt 마이너 프록시 + 10 ppt
+  (회계상으로는 마이너별 `G_n` 수수료 귀속이 마이너 몫을 분할하기 전까지 800 ppt 마이너 프록시 + 100 ppt
   검증자 몫이 블록 작성자에게 함께 배치된다). 팁은 100% 블록 작성자에게 귀속된다.
   **비준된 목표치**는 마이너 80% / 검증자 10% / 소각 10%이며, 작성자 프록시 회계는 그 잠정적 구현이다.
   전체 분류 체계: [부록 D](#appendix-d--fee--revenue-map).
@@ -94,12 +98,12 @@
 유지된다).
 
 - **R9.7 — 제네시스 시점의 공급.** 총 제네시스 공급은
-  [`genesis_supply`](#param-genesis_supply) = 3,500,000,000 FLOP(18 소수 자릿수)이어야 **MUST** 하며,
+  [`genesis_supply`](#param-genesis_supply) = 4,400,000,000 FLOP(18 소수 자릿수)이어야 **MUST** 하며,
   제네시스 시점에는 **오직** 세 에어드롭 코호트와 §9.1 R9.4의 생태계 리저브만이 이를 보유한다 — VC
   프리민트 없음, 경매 없음, 팀 배분 없음. 제네시스에서는 어떠한 블록 보상도 발행되지 않았다; 에라 0
   발행은 블록 생산과 함께 시작된다.
-- **R9.8 — 체인 스펙 상수.** 제네시스에 고정되며 합의에서 관측 가능한 값들이다: **18 소수 자릿수**, 기본
-  단위 `VFY` (1 VFY = 1 FLOP); `TOKEN_SYMBOL`을 통한 사용자 대면 티커(메인넷 브랜딩 단계, §14.2);
+- **R9.8 — 체인 스펙 상수.** 제네시스에 고정되며 합의에서 관측 가능한 값들이다: **18 소수 자릿수**(기본
+  단위 10⁻¹⁸ FLOP); `TOKEN_SYMBOL`을 통한 사용자 대면 티커(메인넷 브랜딩 단계, §14.2);
   **SS58 프리픽스**(`SS58Prefix`; 메인넷은 `SS58_ZKV_PREFIX`, 데브넷은 별도의 프리픽스 — §6.5); 1초 블록
   타임; 최소 잔고(existential deposit) 0.01 FLOP.
 - **R9.9 — 초기 권한자.** 제네시스 체인 스펙은 초기 검증자 집합과 그 세션 키(BABE + AlephBFT)를 **MUST**
@@ -118,7 +122,9 @@
 
 ### 근거 및 출처 *(비규범적)*
 
-출처: `D-0438`(제네시스 풀 2,483,460,000 → 3,500,000,000, 네 코호트를 재분할한다;
+출처: `D-0440`(검증자 본드 305,505 → 1,200,000, 이에 따라 검증자 코호트
+305,505,000 → 1,200,000,000, 풀 3,500,000,000 → 4,400,000,000; D-0438의 풀과 D-0435의 본드를
+대체하며, 발행은 그대로 둔다), `D-0438`(제네시스 풀 2,483,460,000 → 3,500,000,000, 네 코호트를 재분할한다;
 D-0421/D-0435의 풀 규모를 대체하며, 발행은 그대로 둔다), `D-0436`(5회 반감, 3 FLOP
 하한, 5개 에라 보조금 — D-0421의 6회차 반감
 조항을 대체하고 D-0435의 보조금 스케줄을 수정한다), `D-0435`(4분할, 반감하는 보조금), `D-0421`
@@ -131,7 +137,9 @@ halving-exodus-boundary-conditions.md,
 fee-design.md, miner-validator-economics.md,
 agent-token-economics.md,
 f2-exodus-threat-model.md,
-pouw-landscape-2026.md. 수요/가치 리스크 증거 검토:
+pouw-landscape-2026.md,
+gonka-cocoon-deep-dive.md,
+demand-bound-useful-work-certificates.md. 수요/가치 리스크 증거 검토:
 [prepublication-evidence.md](research/prepublication-evidence.md). 보조금 및 참여자 경제성에 관한
 주장은 E.8, E.35, E.38–E.40, E.49의 외부 수요, 분배, 담보 가치, 동시 노출 입력값에 여전히 조건부다.
 출처 명확화: `D-0501`. 전체 모델:

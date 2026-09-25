@@ -44,7 +44,7 @@
 | 증거 위조 | 100% 소각 | 퇴출 + 블랙리스트 | 없음 |
 | TEE 어테스테이션 실패 *(HARD 티어 어테스테이션에 한함)* | 100% 소각 | 퇴출 + 블랙리스트 | 없음 |
 | 라이브니스 — 다운타임 > 300 블록 | [`slash_liveness_percent`](#param-slash_liveness_percent) = 1% | 감금(jailed) | ≥ 1 h 경과 후 `un_jail` |
-| 장기 다운타임 > 24 h | [`slash_extended_downtime_percent`](#param-slash_extended_downtime_percent) = 5% | 강제 퇴출(kicked) | 전체 스테이크 증액과 함께 `rejoin` |
+| 장기 다운타임 > 24 h | [`validator_extended_downtime_slash_percent`](#param-validator_extended_downtime_slash_percent) = 5% | 강제 퇴출(kicked) | 전체 스테이크 증액과 함께 `rejoin` |
 
 결탁/위조/TEE는 100% 고정으로 유지된다(증거에 기반한 사기). 이중 서명은 유일한 상관형·회복 가능
 등급이다(단독 이중 서명은 대개 정직한 페일오버 버그다). 모든 슬래시 경로에서 손실 순서(위임 손실

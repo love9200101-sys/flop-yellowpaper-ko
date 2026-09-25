@@ -1,12 +1,16 @@
 ## 8. 성과 잠금 베스팅
 
 ```
-UnlockRate = ( G_n_actual / B_p )²  =  R_p²        (R_p = 0.5 → unlock 0.25)
+R_p ≔ min(G_n_actual / B_p, 1) ∈ [0, 1]
+UnlockRate = R_p²                                  (R_p = 0.5 → unlock 0.25)
 Blackout:  capacity < 10% for blackout_revoke_blocks continuous blocks  →  grant revoked (1.0× slash)
 ```
 
-- **R8.1.** 워크 베스팅 그랜트의 해제 비율은 **MUST** 볼록 함수 `R_p²`이어야 한다(성과 미달은
-  초선형적으로 벌점이 부과된다; `R_p² ≤ R_p`).
+- **R8.1.** `create_grant`로 생성된 워크 베스팅 그랜트는 그랜트 생성 시점에 스냅숏된, 0이 아닌
+  파이널라이즈된 §7 캘리브레이션 베이스라인을 `B_p`로 **MUST** 취해야 한다; Root 전용 `force_create_grant`는
+  그 검사를 우회하고 호출자가 제공한 0이 아닌 임의의 베이스라인을 취한다(부록 H). 그 플레지 비율은 제곱하기
+  전에 1로 **MUST** 클램프되어야 하므로 `R_p ≔ min(G_n_actual / B_p, 1) ∈ [0, 1]`이다; 해제 비율은 **MUST**
+  볼록 함수 `R_p²`이어야 한다(성과 미달은 초선형적으로 벌점이 부과된다; `R_p² ≤ R_p`).
 - **R8.2.** [`blackout_revoke_blocks`](#param-blackout_revoke_blocks) 동안 10% 미만의 연속적인 용량
   블랙아웃은 **MUST** 그랜트를 취소해야 한다(1.0× 슬래시).
 
@@ -32,7 +36,9 @@ SOFT 마이너는 TEE 키가 없으며; 그 챌린지 전달, 신원 바인딩, 
 근거 자료: ghost-task-sampling-design.md(샘플링,
 `GhostTaskCommitment`/`MinerExecutionEvidence`/`CheckerVerdict`, 발행자/검사자 분리 + 이의 제기),
 miner-capacity-stake-calibration.md. 형식 검증:
-`FlopSpecs/Vesting.lean`(`unlock_le_ratio`). 상태:
+`FlopSpecs/Vesting.lean`(`unlock_le_ratio`; 그
+`h1 : R_p ≤ 1` 가정은 R8.1의 클램프로 강제된다). 낮은 `B_p`를 노리는 캘리브레이션 샌드배깅은 여전히
+M13의 **[GAP]**으로 남아 있다. 상태:
 [부록 H](#appendix-h--conformance--implementation-status-matrix).
 
 ---

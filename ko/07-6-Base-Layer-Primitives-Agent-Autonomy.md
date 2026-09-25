@@ -43,6 +43,12 @@ required_self_stake(B_p) = min_miner_self_stake + miner_capacity_stake_per_gflop
 - **R6.2b.** 소유자는 언제든지 **MUST** 취소할 수 있어야 한다. 지출은 세션 상한(§11 INV-02), 일일 상한,
   서킷 브레이커에서 **MUST** 차단되어야 한다. 탈취된 세션 키는 이러한 상한들에 의해 **MUST**
   제한되어야 한다.
+- **R6.2c — 서킷 브레이커.** 브레이커 윈도는 위임 대리인별이며 그 세션들 전체에 걸쳐 공유된다: 위임
+  대리인의 첫 `create_session`에서 열리고, 경과한 뒤에는 위임 대리인의 다음 트랜잭션에서 다음 윈도가
+  열린다. 트랜잭션 개수 한도와 지출 한도는 독립적으로 발동한다; 어느 쪽이든 발동하면 윈도가 끝나 자동
+  리셋될 때까지 위임 대리인의 모든 트랜잭션 거부를 **MUST** 래치해야 하며, Root는
+  `force_reset_circuit_breaker`로 이를 더 일찍 **MAY** 리셋할 수 있다
+  (`pallets/pallets/session-keys/src/lib.rs::{check_and_update_circuit_breaker,is_circuit_breaker_tripped}`).
 
 ### 6.3 트랜잭션 / 상태 모델
 
@@ -50,10 +56,12 @@ FLOP는 **계정 모델**을 유지한다. 완전한 UTXO 네이티브로 가는
 
 - **에이전트 간 병렬성은 비용 없이 확보된다** — 독립적인 에이전트들은 서로소인 계정을 다루며, BFT-DAG가
   이들의 동시 블록 순서를 정한다.
-- **에이전트 내부** 트랜잭션은 단일 `u32` nonce 위에서 직렬화된다(동시 진행 1건, head-of-line 블로킹).
+- **에이전트 내부** 트랜잭션은 하나의 단조 증가 `u32` 계정 nonce를 사용한다. 런타임은 한 블록 안에서 한
+  계정의 연속된 nonce를 받아들인다(`pallets/runtime/zkverify/src/lib.rs::SignedExtra`는
+  `frame_system::CheckNonce<Runtime>`를 사용한다); 단일 레인 동시 진행 한도는 클라이언트 정책이다.
   구현체는 nonce가 자기 스트림만 직렬화하도록 각 에이전트에 (`agent-wallet`을 통해) 자체 계정을
   **SHOULD** 부여해야 하며, head-of-line 블로킹을 제거하기 위해 2차원/병렬 nonce(계정당 복수 레인)를
-  **MAY** 추가할 수 있다. 이는 세션(§12.1)에 의해 대체로 무의미해진다. 스트리밍 세션은 OPEN/SETTLE
+  **MAY** 추가할 수 있다; 2차원 레인은 채택되지 않았다. 이는 세션(§12.1)에 의해 대체로 무의미해진다. 스트리밍 세션은 OPEN/SETTLE
   시점에만 체인에 접촉하기 때문이다.
 
 순수한 고빈도 마이크로페이먼트 핫 경로를 위해 UTXO 결제 사이드 레일은 여전히 선택지로 남아 있으나, 이는
@@ -85,10 +93,12 @@ FLOP는 **계정 모델**을 유지한다. 완전한 UTXO 네이티브로 가는
   데브넷은 별개의 프리픽스를 사용한다). 익스트린식은 `MultiAddress<AccountId, ()>`를 통해 계정을
   지정한다.
 - **R6.5b.** 계정은 최소 잔고(existential deposit, `EXISTENTIAL_DEPOSIT` = 0.01 FLOP) 이상을 **MUST**
-  보유해야 하며, 그렇지 않으면 소멸(reap)된다. 잔액은 18 소수 자릿수를 가지며, 기본 단위는
-  `VFY`이다(1 VFY = 1 FLOP).
+  보유해야 하며, 그렇지 않으면 소멸(reap)된다. 잔액은 18 소수 자릿수를 가지며 10⁻¹⁸ FLOP
+  기본 단위의 정수 개수이다.
 - **R6.5c.** 계정 내부 트랜잭션은 단조 증가하는 `u32` nonce 위에서 직렬화된다(§6.3). 위임 대리인
-  에이전트는 자신의 nonce 스트림이 독립적이 되도록 자체 계정을 **SHOULD** 보유해야 한다.
+  에이전트는 자신의 nonce 스트림이 독립적이 되도록 자체 계정을 **SHOULD** 보유해야 한다. 런타임은 한
+  블록 안에서 한 계정의 연속된 nonce를 **MUST** 받아들여야 한다; 단일 레인 동시 진행 한도는 런타임
+  제약이 아니라 클라이언트 정책이다(`frame_system::CheckNonce<Runtime>`).
 
 **서명 방식.** 런타임 서명 타입은 `MultiSignature`(서명자 `MultiSigner`)이며, **sr25519**, **ed25519**,
 **ecdsa/secp256k1**을 허용한다. 역할별 사용은 고정되어 있다.
@@ -112,11 +122,12 @@ FLOP는 **계정 모델**을 유지한다. 완전한 UTXO 네이티브로 가는
 | `BlakeTwo256` | 블록/상태/익스트린식 해싱(런타임 `Hashing`); `task_hash = blake2_256(…)`(부록 F.1) |
 | `SHA256` | `report_data` 쿼트 바인딩 프리이미지(§3.3)와 HTLC 해시락 `H = SHA256(s)`(§10) |
 | `keccak256` | 도메인별 머클 루트로 수집되는 집계 스테이트먼트 해시(§3.6) |
-| 머클 (BlakeTwo256 리프) | 세션 트랜스크립트 누산기 + `aggregate_gn` 합산 트리(§12.1b, 부록 F.3); dm-verity는 자체 4 KB 블록 머클 트리를 사용한다(§3.3) |
+| 머클 (BlakeTwo256 리프) | 세션 트랜스크립트 누산기(§12.1b, 부록 F.3); dm-verity는 자체 4 KB 블록 머클 트리를 사용한다(§3.3) |
 
 - **R6.5e — 도메인 분리.** 서명되거나 해시되는 페이로드는 한 맥락의 서명 또는 커밋먼트가 다른 맥락에서
-  재생될 수 없도록 **MUST** 도메인 분리되어야 한다. 트랜스크립트 리프는 `session_id ‖ turn_index`를
-  바인딩하고(§12.1b), `task_hash`는 `agent ‖ nonce ‖ model_hash ‖ …`를 바인딩하며(부록 F.1),
+  재생될 수 없도록 **MUST** 도메인 분리되어야 한다. 트랜스크립트 리프는 `channel_id ‖ turn_index`를
+  바인딩하고(§12.1b), `task_hash` v1은 필드들 앞에 `"FLOP/POUI/TASK"` 태그, 버전 바이트,
+  `genesis_hash`를 두고 시작하며(부록 F.1),
   `report_data`는 전체 `(task_hash, gn_weight, …, tee_type)` 튜플을 바인딩한다(§3.3).
 
 ### 근거 및 출처 *(비규범적)*

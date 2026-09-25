@@ -1,9 +1,19 @@
 ## 7. 하드웨어 캘리브레이션과 드리프트
 
 ```
-C_emp = floor(Σ G_job · 10⁶ / (Δblocks · u_min))
-C_hard = min(C_emp, d_hard · Σ_s n_s C_sku(s))
+C_ceiling = Σ_s n_s C_sku(s)
+C_emp   (miner-proposed; accepted iff floor(C_emp · Δblocks · u_min / 10⁶) ≤ Σ G_job)
+C_hard = min(C_emp, floor(C_ceiling · d_hard / 10⁶))
+C_effective ≔ C_emp                                                (SOFT)
+              min(C_hard, floor(C_ceiling_current · d_hard / 10⁶)) (HARD)
 ```
+
+여기서 `u_min ≔` [`calibration_min_utilization_ppm`](#param-calibration_min_utilization_ppm)이고
+`d_hard ≔` [`calibration_provisional_discount_ppm`](#param-calibration_provisional_discount_ppm)이다.
+`C_effective`는 활성화된 상한이다. `C_hard`는 저장된 HARD 티어 상한이다; 갱신 시 현재의 거버넌스
+인벤토리 상한은 이를 조일 수는 있으나 올릴 수는 없다. 마이너가 `C_emp`를 제안한다; 작업 게이트는 비교 전에
+요구량을 내림(floor)하고, 버스트가 충당하는 어떤 상한이든 수락한다. 그러한 상한 중 가장 큰 것을 요구하지는
+않으므로 더 낮은 주장도 수락된다(M13 캘리브레이션 샌드배깅 공백).
 
 ### 7.1 진입 — 벤치마크 버스트
 
@@ -15,7 +25,8 @@ C_hard = min(C_emp, d_hard · Σ_s n_s C_sku(s))
 **R7.1a.** `accept_benchmark_burst`는 다음 경우에 **MUST** 닫힘 실패(fail closed)해야 한다: 상한이 0인 경우;
 [`calibration_min_verified_jobs`](#param-calibration_min_verified_jobs) 미만인 경우;
 [`calibration_min_burst_blocks`](#param-calibration_min_burst_blocks)보다 짧은 윈도우; 만료되었거나
-미검증된 크리덴셜; `C_emp · Δblocks · u_min` 미만의 검증된 작업량; 용량 비례 자기 스테이크 부족; 또는
+미검증된 크리덴셜; `floor(C_emp · Δblocks · u_min / 10⁶)` 미만의 검증된 작업량(`C_effective`가 아니라 실측 상한 기준);
+`C_effective`에 대한 용량 비례 자기 스테이크 부족; 또는
 [`calibration_min_recalibration_interval_blocks`](#param-calibration_min_recalibration_interval_blocks)
 이내에 수락된 초기 상한. 용량 예치금은 상한 활성화 전에 **MUST** 존재해야 한다.
 
@@ -45,7 +56,7 @@ C_hard = min(C_emp, d_hard · Σ_s n_s C_sku(s))
 작업을 요구한다. 그 트리거는 **MUST NOT** 미래이거나
 [`calibration_renewal_max_age_blocks`](#param-calibration_renewal_max_age_blocks)보다 오래된 것이어서는
 안 된다. 이들의 집계 검증 작업량은
-`C_effective × max(1, current_block − renewal_trigger) × calibration_min_utilization_ppm / 10^6`을 **MUST** 충당해야 한다.
+`floor(C_effective × max(1, current_block − renewal_trigger) × u_min / 10⁶)`을 **MUST** 충당해야 한다.
 작업 수만으로는 상한을 **MUST NOT** 갱신해서는 안 된다. 갱신은 실측 용량이나 유효 용량 어느 쪽도
 **MUST NOT** 증가시켜서는 안 된다.
 
@@ -85,7 +96,11 @@ C_hard = min(C_emp, d_hard · Σ_s n_s C_sku(s))
 ### 근거 및 출처 *(비규범적)*
 
 출처(provenance): `D-0405`(측정된 `G_n`), `D-0418`(용량 스테이크), `D-0433`(신속 진입,
-갱신형 상한, 생애주기 재검증). 가격 산정된 마이너 BOM:
+갱신형 상한, 생애주기 재검증). 런타임 정합:
+`hw-calibration::{accept_benchmark_burst,effective_cap,discounted_cap,renew_benchmark_cap}`
+은 초기 작업 게이트에는 실측 상한을, 본딩과 갱신에는 티어에 따라 달라지는 유효 상한을 사용한다. 거버넌스
+하한값에서 600 블록 동안 64 jobs × 1,000 G는 최대 `C_emp = 213`까지 허용한다; 요구 작업량은 63,900 G이므로
+64,000 G는 통과한다. 가격 산정된 마이너 BOM:
 validator-miner-hardware-costs.md. SDC/드리프트 탐지기
 문헌: arXiv:2502.12340, arXiv:2605.04213, arXiv:2604.10390. 형식 검증:
 `FlopSpecs/CalibrationFastPath.lean`,

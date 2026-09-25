@@ -9,10 +9,10 @@ FLOP Labs가 공개한 **FLOP Network Yellow Paper 0.5.0 (draft)** 의 한국어
 | | |
 |---|---|
 | 원문 | [flop-labs/yellowpaper](https://github.com/flop-labs/yellowpaper) · `yellowpaper.md` |
-| 고정 커밋 | [`3eaf2f2`](https://github.com/flop-labs/yellowpaper/blob/3eaf2f25bc46a501df225cae4e4e991975f6b2a9/yellowpaper.md) |
-| 원문 SHA-256 | `cb414e5cdfe72eec048102720c0ebff5e25b00d8910ae2affe137746b59c8ea9` (248,811 바이트) |
+| 고정 커밋 | [`3c97bbc`](https://github.com/flop-labs/yellowpaper/blob/3c97bbc8d6ba68cf2ea003ab88bc154aafdf105e/yellowpaper.md) |
+| 원문 SHA-256 | `b09a36d8eca75324152f2084c0cb7b9d21987e12d857445933907a12b0b0c03b` (313,714 바이트) |
 | 원문 버전 | 0.5.0 (draft) |
-| 번역 기준일 | 2026-09-11 |
+| 번역 기준일 | 2026-09-25 |
 | 라이선스 | 원문·번역 모두 [CC BY 4.0](LICENSE) · 저작자 표시와 변경 내역은 [NOTICE.md](NOTICE.md) |
 
 전체를 한 파일로 읽으려면 [`yellowpaper.ko.md`](yellowpaper.ko.md), 절별로 읽으려면 [`ko/`](ko/) 를 보면 된다.
@@ -42,14 +42,14 @@ python3 tools/check_fidelity.py    # 식별자·수치·앵커가 번역에 살�
 현재 상태다.
 
 - **구조 일치**: 26개 파일 전부에서 표의 행 수, 제목 개수와 단계, `param-` 앵커의 개수와 순서가 원문과 같다.
-- **축자 요소 보존**: 요구사항 ID 109개, 결정 ID 185개, 미결 항목 104개, 파라미터명 653개, 큰 수 124개, RFC 2119 키워드 201개, HTML 앵커 145개를 대조해 단 한 건의 의도된 예외를 빼고 모두 보존됐다.
+- **축자 요소 보존**: 요구사항 ID 170개, 결정 ID 207개, 미결 항목 146개, 파라미터명 717개, 큰 수 146개, RFC 2119 키워드 419개, HTML 앵커 146개를 대조해 단 한 건의 의도된 예외를 빼고 모두 보존됐다.
 - 그 예외는 부록 A의 `parts-per-10,000`을 `1만분율`로 옮긴 것이다. 숫자가 아니라 단위 표현이라 한국어로 번역하는 편이 옳다고 판단했다.
 
-**검증하지 않은 것도 분명히 밝힌다.** 위 검사는 기계적 대조일 뿐 의미 검토가 아니다. 원어민 전문가의 문장 단위 감수는 거치지 않았다. 번역 과정에서 옮기기 애매하다고 표시된 대목이 스무 곳가량 있으며, 대부분 원문이 새로 만든 용어이거나 원문 자체가 문장 중간에서 잘린 곳이다.
+**검증하지 않은 것도 분명히 밝힌다.** 위 검사는 기계적 대조일 뿐 의미 검토가 아니다. 원어민 전문가의 문장 단위 감수는 거치지 않았다. 번역 과정에서 옮기기 애매하다고 표시된 대목이 스무 곳가량 있었고, 2026-09-25 갱신(§5.4 유료 데이터 저장소, 부록 E·F·G의 신규 항목 등)에서 서른 곳가량이 더 표시됐다. 대부분 원문이 새로 만든 용어이거나 원문 자체가 문장 중간에서 잘린 곳, 또는 뜻이 압축되어 해석이 갈릴 수 있는 곳이다.
 
 ## 알려진 한계
 
-1. **원문이 초안이다.** 0.5.0은 draft이고 부록 E에는 미결 항목이 29건 남아 있다. 원문이 갱신되면 이 번역은 그만큼 낡는다. 그래서 커밋과 해시를 고정해 두었다. 항상 위 표의 커밋과 비교해서 읽어야 한다.
+1. **원문이 초안이다.** 0.5.0은 draft이고 부록 E에는 미결 항목이 33건 남아 있다. 원문이 갱신되면 이 번역은 그만큼 낡는다. 그래서 커밋과 해시를 고정해 두었다. 항상 위 표의 커밋과 비교해서 읽어야 한다.
 2. **의미 감수가 남아 있다.** 위 참조.
 3. **표준 역어가 없는 용어가 있다.** `serve-or-slash`, `adjudication-inert`, `length-disjoint` 처럼 원문이 새로 만든 표현은 음차하거나 풀어 쓰고 첫 등장 시 영문을 괄호로 병기했다.
 
@@ -77,9 +77,9 @@ An unofficial Korean translation of the **FLOP Network Yellow Paper 0.5.0 (draft
 > disagree, the original governs.** Implement, audit, and decide from the English text.
 
 Source: [flop-labs/yellowpaper](https://github.com/flop-labs/yellowpaper) `yellowpaper.md`
-at commit `3eaf2f25bc46a501df225cae4e4e991975f6b2a9`,
-SHA-256 `cb414e5cdfe72eec048102720c0ebff5e25b00d8910ae2affe137746b59c8ea9` (248,811 bytes),
-retrieved 2026-09-11. Pin details in [`SOURCE.json`](SOURCE.json).
+at commit `3c97bbc8d6ba68cf2ea003ab88bc154aafdf105e`,
+SHA-256 `b09a36d8eca75324152f2084c0cb7b9d21987e12d857445933907a12b0b0c03b` (313,714 bytes),
+retrieved 2026-09-25. Pin details in [`SOURCE.json`](SOURCE.json).
 
 Only human-language prose is translated. Code spans, parameter names, requirement and
 decision identifiers, numbers, formulas, byte layouts, link targets, HTML anchors and

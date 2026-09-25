@@ -5,14 +5,14 @@
   "publisher": "FLOP Labs",
   "copyright": "Copyright (c) 2026 FLOP Labs",
   "repository": "https://github.com/flop-labs/yellowpaper",
-  "commit": "3eaf2f25bc46a501df225cae4e4e991975f6b2a9",
+  "commit": "3c97bbc8d6ba68cf2ea003ab88bc154aafdf105e",
   "file": "yellowpaper.md",
-  "raw_url": "https://raw.githubusercontent.com/flop-labs/yellowpaper/3eaf2f25bc46a501df225cae4e4e991975f6b2a9/yellowpaper.md",
-  "sha256": "cb414e5cdfe72eec048102720c0ebff5e25b00d8910ae2affe137746b59c8ea9",
-  "bytes": 248811,
+  "raw_url": "https://raw.githubusercontent.com/flop-labs/yellowpaper/3c97bbc8d6ba68cf2ea003ab88bc154aafdf105e/yellowpaper.md",
+  "sha256": "b09a36d8eca75324152f2084c0cb7b9d21987e12d857445933907a12b0b0c03b",
+  "bytes": 313714,
   "license": "CC-BY-4.0",
   "license_url": "https://creativecommons.org/licenses/by/4.0/",
-  "retrieved": "2026-09-11"
+  "retrieved": "2026-09-25"
  },
  "translation": {
   "language": "ko",

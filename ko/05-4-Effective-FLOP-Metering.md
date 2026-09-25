@@ -20,7 +20,7 @@ F_eff ≈ 2 · P_active · N  +  2 · n_layer · n_ctx · d_attn   (attention te
 
 토큰당, 레이어당: QKV `6d²`, 어텐션 출력 `2d²`, FFN `16d²`. 단순 `2·P·N`은 약 2–3× 정확도이다(2차 어텐션 항, 임베딩/언임베딩, LayerNorm/softmax를 생략한다; MoE는 *활성* 파라미터를 사용한다; KV 캐시는 FLOP 효과가 아니라 대역폭 효과이다). 참조 예시(≈, 명시된 아키텍처 가정 하에서): Llama-3-8B 16, DeepSeek-V3 74, Llama-3-70B 140 `G_n`/토큰. 독점(proprietary) 모델 수치는 프로토콜 측정값이 아니다.
 
-**가격 대 작업.** 가격은 컨텍스트/모델 승수를 포함하여 토큰 단위로 제시되는 반면, 작업은 `F_eff`로 미터링된다(`flop-poui` 수수료 `(base+priority)·gflops/1000·precision_mult`). 트랜잭션 수수료의 수령자 분배는 §9 / Appendix D에 명시되어 있다.
+**가격 대 작업.** 가격은 컨텍스트/모델 승수를 포함하여 토큰 단위로 제시되는 반면, 작업은 `F_eff`로 미터링된다(`flop-poui` 수수료 `(base+priority)·gflops/1000·precision_mult`). 트랜잭션 수수료의 수령자 분배는 §9 / Appendix D에 명시되어 있다. `G_n`만으로는 외부의 토큰당 견적을 비교 가능한 세션 가격으로 환산할 수 없다; 버전이 붙은 세션 전 견적 계약, 그 인터페이스의 소재, 그리고 남은 차단 요인은 [E.55](#appendix-e--open-specification-items)이다.
 
 ### 근거 및 출처 *(비규범적)*
 

@@ -18,10 +18,13 @@ stateDiagram-v2
   §10.2–§10.3에 명시된 해당 페어의 파이널리티, 포함(inclusion), 프리이미지, 타임아웃, 신원, 수수료,
   릴레이어 가정에 조건부이며, 무조건적인 원자성 보장이 아니다.
 - **R10.2 — 타임락 대칭성.** 외부 체인의 기간을 1초 단위 FLOP 블록으로 변환한 후, `T_FLOP`는 **MUST**
-  `T_other + max(ceil(T_other × p / 100), max_finality_stall + current_finality_lag)`를 만족해야 한다.
-  여기서 `p`는
+  `T_FLOP ≥ T_other + max(ceil(T_other × p / 100), max_finality_stall + current_finality_lag)`를
+  만족해야 한다. 여기서 `p`는
   [`htlc_timelock_symmetry_safety_margin_percent`](#param-htlc_timelock_symmetry_safety_margin_percent)
-  이고 `max_finality_stall`은 [`max_finality_stall`](#param-max_finality_stall)이다. 이 마진은 필요한
+  이고, `max_finality_stall`은 [`max_finality_stall`](#param-max_finality_stall)이며,
+  `current_finality_lag`는 어드미션을 평가하는 블록이 파이널라이즈된 프리픽스(`FinalizedPrefix`, R2.2)를
+  앞서는 블록 수, 즉 그 블록에서 읽은 `block_number − finalized_number`이다. 이 관계는
+  어드미션 시점에 평가되며 등호도 허용된다: 우변과 정확히 같은 `T_FLOP`는 수락된다. 이 마진은 필요한
   어드미션 조건이며, 그 자체로 적시 포함(timely inclusion)을 보장하는 것은 아니다.
 - **R10.3 — 환불의 리오그 안전성.** 환불은 팁(tip)이 아니라 AlephBFT **파이널라이즈된** 헤드를 기준으로
   **MUST** 게이트되어야 한다(팁 기준 환불은 리오그에 안전하지 않다).
