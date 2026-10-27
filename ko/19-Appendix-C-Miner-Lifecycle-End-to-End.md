@@ -13,8 +13,8 @@
 | C.6 종료 | `settle` / `force_settle` → `finalize` / `timeout` / 분쟁 | §12.1 |
 | C.7 연장 | `top_up_escrow`; 지속 기간 한정; 마이너 간 체이닝 | §12.1 |
 
-**C.1 온보딩.** `miner_staking::register_miner(commission)`을 통해 용량 비례 요구치(§6.1) 이상을
-본딩한다; 언본딩은 세션/분쟁/감사 중 하나라도 열려 있는 동안 슬래싱 잠금 상태가 된다. §7의 시간 제한
+**C.1 온보딩.** `miner_staking::register_miner(commission)`을 통해 용량 비례 자기 스테이크 요구치(§6.1) 이상을
+본딩한다(마이너 스테이크는 자기 스테이크만 가능하다; `commission` 인자는 D-0530에 따라 폐기되었다); 언본딩은 세션/분쟁/감사 중 하나라도 열려 있는 동안 슬래싱 잠금 상태가 된다. §7의 시간 제한
 벤치마크를 완료한다(SOFT: 인벤토리 상한 없음; HARD: 어테스테이션된 `(SKU,count)`의 합계 상한으로 한정).
 활성화 전에 용량 스테이크를 예치한다; 워커는 새로운 카나리로부터 7일 상한을 갱신한다. 제공하는 각 모델을
 `model_registry::register_miner(...)`로 등록하고, 측정된 dm-verity 루트를 결속한다
@@ -26,9 +26,10 @@
 
 **C.3 수립.** 협조적 경로: RA-TLS 핸드셰이크가 인클레이브를 어테스테이션한 뒤, 에이전트가
 `open_channel(miner, model_hash, measured_root, decode_policy_hash, precision, enclave_key, agent_key, sla, escrow, nonce, settlement_class)`를
-호출한다; 에스크로가 예약되며 이것이 **곧** 가격이다. 퍼미션리스 경로: `force_open(...)`은 채널을
-`PendingAck { ack_deadline = now + AckWindow }` 상태로 둔다; 지명된 마이너는 `force_ack(channel_id,
-enclave_key)`로 수락한다; 그렇지 않으면 `expire_force_open`이 전액을 환불하며, 에스크로가
+호출한다; 에스크로가 예약되며 이것이 **곧** 가격이다. `settlement_class`는 해당 채널에 고정되는 부록 F.3의 정산 모드이다.
+퍼미션리스 경로: `force_open(...)`은 `SettlementClass::Standard`를 함의하며 채널을
+`PendingAck { ack_deadline = now + AckWindow }` 상태로 둔다; 지명된 마이너는 `force_ack(channel_id, enclave_key)`로
+수락하는데, 여기서 `enclave_key`는 세션 서명 키이며 팰릿은 이로부터 어떠한 TEE 출처도 추론하지 않는다. 그렇지 않으면 `expire_force_open`이 전액을 환불하며, 에스크로가
 [`min_force_open_escrow_for_failed_ack`](#param-min_force_open_escrow_for_failed_ack) 이상인 경우에만
 `FailedAcks`를 기록한다.
 
@@ -39,9 +40,8 @@ enclave_key)`로 수락한다; 그렇지 않으면 `expire_force_open`이 전액
 일방적으로 정산한다. 재어테스테이션은 `k` 턴마다 반복된다(§12.1h).
 
 **C.5 청구.** 종료 시 마이너는 최종 루트, 집계 `G_n`, 마지막 상호 영수증을
-`settle`/`force_settle`에 게시한다; 적립은 `GnSink::validate_session_gn`(타당성 한계
-— §11.2) 직후 즉시 이루어지며, 이어서 `payout_settlement`이 집계 `G_n`을 `WorkVesting`/`BlockRewards`
-누산기에 투입한다. settle 경로는 측정된 루트를 레지스트리와 대조하여 재확인한다.
+`settle`/`force_settle`에 게시한다; `GnSink::validate_session_gn`이 지급 전에 타당성을 검사한다(§11.2).
+채널 지급은 `WorkVesting`/`BlockRewards`, 위원회 최신성(recency), 캘리브레이션 어느 것에도 투입되지 않는다(R11.2b). settle 경로는 측정된 루트를 레지스트리와 대조하여 재확인한다.
 
 **C.6 종료.** `settle`(양측 서명 → 즉시 지급, 미사용분 환불 없음); `force_settle` →
 `finalize`(챌린지 윈도 7일 ≤ `W`); `timeout`(미이행 → 전액 환불, `φ=0`); 실패/조기

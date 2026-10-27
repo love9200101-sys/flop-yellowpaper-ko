@@ -50,18 +50,25 @@
 | 블록 시간 | **1 s**(BABE 블록 생성) | 포함, 웨이트 예산 | — |
 | 파이널리티 | AlephBFT, 헤드보다 수 초 뒤 | 모든 비가역적 행위(지급, 만료, 슬래시, 프루닝)는 팁이 아니라 `FinalizedPrefix`를 읽는다 | **파이널리티 정지는 구조적으로 경제적 기한을 MUST 동결해야 한다**(§13 F1); 운영 클록은 자금을 해제하지 않는 경우에만 계속 진행할 수 있다 |
 | BABE 에포크 / 위원회 세션 | 에포크 **1 h** 프로덕션(`EpochDurationInBlocks`; fast-dev에서는 1 min); 위원회 세션은 모든 빌드에서 **900 blocks**(`AlephEpochBlocks`, ~15 min; 프로덕션에서는 에포크당 4개, fast-dev에서는 15 에포크당 1개) | BABE 랜덤성 에포크; `pallet_aleph`가 매 세션 PoUI 게이트 파이널리티 위원회를 다시 스냅숏한다 | 900블록 세션은 연 35,040회 추첨을 제공한다; 프로덕션에서 한 에포크의 네 세션은 모두 그 에포크의 랜덤성으로부터 추첨된다(R15.4b); 위원회 장악 경계를 적격 집합 집중도와 결합한다(§15) |
+| 에이전트 일일 상한 윈도 | **86,400 blocks**([`agent_cap_window_blocks`](#param-agent_cap_window_blocks); 중단 없는 1 s 목표 주기에서 24 h) | 지갑별·세션별 지출 예산 | 지갑 또는 세션 생성 시점에 시작한다; 경계 시점 또는 그 이후의 첫 지출이 해당 예산을 리셋하고 다음 윈도를 시작한다(§6.2). BABE 에포크와 무관하다 |
 | PoUI 속도 제한 윈도 | **1 day**([`poui_submission_window_blocks`](#param-poui_submission_window_blocks) = 86,400; [`poui_max_submissions_epoch`](#param-poui_max_submissions_epoch) = 윈도당 10회 제출) | 마이너별 제출 속도 리셋 | 블록 정렬됨; BABE 에포크와 무관하다 |
 | `force_open` 확인(ack) 윈도 | **~10 min**([`channel_ack_window_blocks`](#param-channel_ack_window_blocks) = 600) | 무허가 개설에 대한 마이너의 비준 | 확인 누락 ⇒ 슬래시가 아니라 평판 반영; 더스트 하한이 카운터를 게이트한다 |
 | 분쟁 응답 윈도 | **~2 h**([`channel_dispute_response_window_blocks`](#param-channel_dispute_response_window_blocks) = 7,200) | 지명된 계쟁 턴에 마이너가 응답할 윈도 | 누락 ⇒ 사기 디폴트 |
 | 어테스테이션 중단 일시정지 상한 | **4 h**([`attestation_outage_pause_cap_blocks`](#param-attestation_outage_pause_cap_blocks) = 14,400) | 어테스테이션 의존 클록의 채널별 최대 일시정지(§13 O1) | 범위가 한정된 일시정지이며, 결코 전역 정지가 아니다 |
 | 캘리브레이션 버스트 | **10 min**([`calibration_min_burst_blocks`](#param-calibration_min_burst_blocks) = 600) | 마이너 집계 호스트 진입 측정 | 활성 갱신형 상한이 서빙을 게이트한다(§7) |
-| 챌린지 / 분쟁 윈도 | **7 days**([`channel_dispute_window_blocks`](#param-channel_dispute_window_blocks) = 604,800) | 강제 정산 계쟁 | **챌린지 윈도에 응답 윈도와 그 1회의 R13.0b 연장을 더한 값은 DA 보존 기간 이하로 MUST 유지되어야 한다** — 빌드 시 `integrity_test`로 강제된다. 분쟁 *개시*까지의 시간만 포괄한다; ~1 d로의 조정은 분석되었으나 보류되었다 |
+| 챌린지 / 분쟁 윈도 | **7 days**([`channel_dispute_window_blocks`](#param-channel_dispute_window_blocks) = 604,800) | 강제 정산 계쟁 | 개시까지의 시간 `D`; 분쟁 전체 수명의 한계는 DA 보존 행의 R1.2a이다. ~1 d로의 조정은 분석되었으나 보류되었다 |
 | 마이너 언본딩 | **7 days**([`miner_unbonding_blocks`](#param-miner_unbonding_blocks)) | 마이너 스테이크 퇴출 | 세션/분쟁이 활성인 동안 차단된다; 스테이크가 계쟁 기간보다 오래 존속하도록 분쟁 윈도 이상으로 MUST 유지되어야 한다 |
-| DA 보존(Ephemeral) | **14 days**([`da_ephemeral_retention_blocks`](#param-da_ephemeral_retention_blocks)) | 트랜스크립트/쿼트 검색 가능성 | **챌린지 윈도 이상으로 MUST 유지되어야 한다**(강제됨); 임계값을 넘는 손실 ⇒ 저하 모드의 페일 클로즈드(fail-closed) 환불, 디폴트 판정 없음(§13.0) |
+| DA 보존(Ephemeral) | **14 days**([`da_ephemeral_retention_blocks`](#param-da_ephemeral_retention_blocks)) | 트랜스크립트/쿼트 검색 가능성 | R1.2a 전체 생명주기 한계: `W > D + (2·⌈log₂ n_max⌉ + 2)·R`; 현재 `604,800 + 22·7,200 = 763,200 < 1,209,600`. 보장된 수명 이후의 손실 ⇒ 저하 모드의 페일 클로즈드(fail-closed) 환불, 디폴트 판정 없음(§13.0) |
 | 체크포인트 | **매일**; 라이트 클라이언트 신선도 **21 days** | 약한 주관성(weak-subjectivity) 앵커 | 고가치 퇴출은 다음 체크포인트까지 SHOULD 냉각되어야 한다(§15) |
 | 검증자 언본딩 | **21 days**([`validator_unbonding_blocks`](#param-validator_unbonding_blocks)) | 검증자/위임자 스테이크 퇴출 | 의무를 높이는 모든 거버넌스 변경은 이 값 이상의 시행 지연을 SHOULD 가져야 한다(E.9) |
 | 세션 키 수명 | **≤ 864,000 blocks**(`SessionKeysMaxDuration`; 중단 없는 1 s 목표 주기에서 ~10일) | 위임된 에이전트 권한 | 예산 + 팔레트 범위가 피해 범위를 한정한다. *(일부 코드 주석의 "60일" 수치는 6 s 블록 기준의 오래된 해석이다; [`session_key_expiry_days`](#param-session_key_expiry_days) 참조.)* |
 | 반감 에라 | **~730 days**([`halving_interval_blocks`](#param-halving_interval_blocks); 5회 반감 + 하한) | 발행 단계; Labs/재단 보조금은 보상과 함께 반감되며 에라 5 하한에서 종료된다 | 반감마다의 이탈 방지 경계 조건이 96→48 참여자 단계를 헤지한다 |
+
+- **R1.2a — 분쟁 전체에 대한 트랜스크립트 보존.** Ephemeral DA 보존 기간 `W`는
+  `D + (2·⌈log₂ n_max⌉ + 2)·R`를 **MUST** 초과해야 하며, 이는 최대 깊이 이분 탐색, 말단 리프 응답,
+  1회의 R13.0b 저하 모드 연장을 포괄한다. `force_settle`은 참조된 블롭을 고정(pin)하기 전에 그 미래
+  블록 시점에서 해당 블롭을 **MUST** 확인해야 한다; 사용 고정은 프루닝을 막지만 블롭의 만료를 **MUST NOT** 연장해서는 안 된다.
+  `integrity_test`는 구성된 상수 한계를 **MUST** 강제해야 한다.
 
 **읽기 규칙(규범적 리뷰 게이트).** 더 짧은 클록은 자신이 보호하는 더 긴 클록을 **MUST NOT** 고립시킬 수
 있어서는 안 된다: 분쟁은 보존 기간 안에 들어가고, 스테이크는 분쟁보다 오래 존속하며, 체크포인트는 퇴출보다 오래 존속하고, 시행은
@@ -136,6 +143,8 @@
 
 | 용어 | 전개 / 의미 |
 |------|--------------------|
+| **Era T** | 거버넌스가 비준한 전환 스냅숏까지 운영되는 공개 인센티브 테스트넷; 그 FLOP은 메인넷 가치가 없다. |
+| **Era 0** | 메인넷 제네시스 발행 에라로, Era-T 전환 스냅숏 이후에 시작된다. |
 | **VFY** | **FLOP 단위가 아니다** — 토큰 1개 전체와 같은 런타임 *상수*(`VFY = 10¹⁸` 기본 단위)의 이름으로, FLOP이 기반으로 하는 zkVerify 런타임에서 물려받았다. 부록 A가 코드 리터럴을 그대로 옮기는 곳에서만 등장한다; 프로토콜 금액은 FLOP 또는 기본 단위로 표시하며, 결코 VFY로 표시하지 않는다 |
 | **HTLC** | *Hashed Timelock Contract*(해시 타임락 계약) — 아토믹 스왑 프리미티브(§10); **MAD-HTLC**는 수수료 매수 공격 모델이다 |
 | **MEV** | *Maximal Extractable Value*(최대 추출 가능 가치) — 순서/타이밍 가치 추출(여기서는 컴퓨트 상의 MEV) |

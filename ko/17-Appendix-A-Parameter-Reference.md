@@ -20,7 +20,7 @@
 | <a id="param-genesis_agent_airdrop"></a>`genesis_agent_airdrop` | 1_200_000_000 FLOP | [§9.3](#93-genesis-configuration) | D-0438 | 제네시스 공급량 중 에이전트 에어드롭 구성분(27.27%). |
 | <a id="param-genesis_reserve"></a>`genesis_reserve` | 800_000_000 FLOP | [§9.3](#93-genesis-configuration) | D-0440 | 제네시스 공급량 중 생태계/인센티브 리저브 구성분(18.18%) — KOL, 추천(referral) 및 성장 인센티브. |
 | <a id="param-validator_min_stake"></a>`validator_min_stake` | 1_200_000 FLOP | [§9](#9-emission--supply) | D-0440 | 기준 하한; 연 9%로 복리 증가한다(MinimumValidatorStake). |
-| <a id="param-airdrop_vesting_duration_blocks"></a>`airdrop_vesting_duration_blocks` | 7_776_000 blocks | [§9](#9-emission--supply) | SPEC-022 | 1초 블록 시간 기준 90일 선형 에어드롭 베스팅 기간. |
+| <a id="param-airdrop_vesting_duration_blocks"></a>`airdrop_vesting_duration_blocks` | 7_776_000 blocks | [§8.2](#82-era-t-conversion-and-airdrop-vesting) | SPEC-022 | 잠정적 팰릿 일정: 1초 블록 시간 기준 90일 선형 에어드롭 베스팅이며, 비준된 어떤 그랜트 티어도 규율하지 않는다(§8.2). |
 
 **발행과 보상**
 
@@ -33,7 +33,9 @@
 | <a id="param-miner_share_ppt"></a>`miner_share_ppt` | 750 parts-per-thousand | [§9](#9-emission--supply) | D-0435 | 각 블록 보상 중 마이너 몫(75%; 옐로페이퍼 §9). |
 | <a id="param-validator_share_ppt"></a>`validator_share_ppt` | 100 parts-per-thousand | [§9](#9-emission--supply) |  | 각 블록 보상 중 검증자 몫(10%). |
 | <a id="param-agent_share_ppt"></a>`agent_share_ppt` | 100 parts-per-thousand | [§9](#9-emission--supply) | D-0435 | 각 블록 보상 중 에이전트/브로커 리베이트 몫(10%; 옐로페이퍼 §9). |
-| <a id="param-staker_share_ppt"></a>`staker_share_ppt` | 50 parts-per-thousand | [§9](#9-emission--supply) | D-0435 | 각 블록 보상 중 커뮤니티 스테이커 몫(5%; 옐로페이퍼 §9) — 마이너와 검증자를 제외한 모든 FLOP 스테이커. |
+| <a id="param-staker_share_ppt"></a>`staker_share_ppt` | 50 parts-per-thousand | [§9](#9-emission--supply) | D-0435 | 각 블록 보상 중 커뮤니티 스테이커 몫(5%; 옐로페이퍼 §9) — 슬래싱 위험 없이, 운영자 위임 없이(D-0530) 7개의 잠금 기간 티어에 걸친 기간 잠금형 커뮤니티 스테이킹 풀로, 마이너와 검증자를 제외한 모든 FLOP 스테이커를 위한 것이다. |
+| <a id="param-reward_distribution_period_blocks"></a>`reward_distribution_period_blocks` | 86_400 blocks | [§9](#9-emission--supply) |  | 블록 보상 분배 사이의 블록 수(1 s 블록 기준 하루). |
+| <a id="param-gn_decay_factor_ppb"></a>`gn_decay_factor_ppb` | 1_000_000_000 ppb | [§9](#9-emission--supply) |  | 키가 없을 때 읽히는 GnDecayFactor: 1.0, 즉 감쇠 없음이므로 한 기간의 마이너 레그는 순전히 검증된 G_n에 따라 분할된다(소유자 결정 2026-10-01, #2144). |
 | <a id="param-finality_committee_premium_weight_ppm"></a>`finality_committee_premium_weight_ppm` | 1_100_000 ppm | [§9](#9-emission--supply) |  | 검증자 10% 풀 내부에서의 파이널리티 위원회 검증자 보상 가중치. |
 
 **개발자 보조금(블록 보상과 별개)**
@@ -41,27 +43,27 @@
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
 | <a id="param-subsidy_per_block_per_recipient"></a>`subsidy_per_block_per_recipient` | 8 FLOP | [§9](#9-emission--supply) | D-0436 | 96 FLOP 블록 보상에 더해, FLOP Labs와 FLOP 재단 각각에 지급되는 ERA-0 블록당 보조금(합산 16 FLOP/block; 옐로페이퍼 §9). |
-| <a id="param-subsidy_duration_blocks"></a>`subsidy_duration_blocks` | 315_360_000 blocks | [§9](#9-emission--supply) | D-0436 | 보조금 발행 기간(약 3650일 = 10년 = 5개의 보조금 반감 에라). 이후 자동으로 종료(sunset)된다. |
+| <a id="param-subsidy_duration_blocks"></a>`subsidy_duration_blocks` | 315_360_000 blocks | [§9](#9-emission--supply) | D-0436 | 배타적 보조금 일몰 블록(~3650일 = 10년 = 5 × halving_interval_blocks)으로, 그 시점 및 이후(`now >= SubsidyEndBlock`)에는 `on_initialize`가 0을 민팅한다. |
 
 **스테이킹과 위임**
 
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
 | <a id="param-min_miner_self_stake"></a>`min_miner_self_stake` | 10_000 FLOP | [§6.1](#61-primitives) |  | 마이너로 등록하기 위한 최소 자기 스테이크(anti-Sybil). |
-| <a id="param-miner_commission_cap_percent"></a>`miner_commission_cap_percent` | 20 percent | [§6.1](#61-primitives) |  | 마이너가 위임자에게 부과할 수 있는 최대 커미션. |
+| <a id="param-miner_commission_cap_percent"></a>`miner_commission_cap_percent` | 20 percent | [§6.1](#61-primitives) | D-0530 | [DEPRECATED — D-0530] 마이너가 위임자에게 부과할 수 있었던 레거시 최대 커미션(20%; 옐로페이퍼 §6.1). |
 | <a id="param-miner_unbonding_blocks"></a>`miner_unbonding_blocks` | 604_800 blocks | [§6.1](#61-primitives) |  | 마이너 언본딩 기간(1s/block 기준 약 7일). |
 | <a id="param-miner_capacity_stake_per_gflop"></a>`miner_capacity_stake_per_gflop` | VFY / 100 (= 0.01 FLOP per GFLOP/s) | [§6.1](#61-primitives) | D-0418 | 용량 비례 마이너 자기 스테이크 = min_miner_self_stake + B_p * 이 값(선형, 상한 없음 — 상한을 두면 최대 규모 마이너의 사기가 +EV가 됨; D-0418, ENG-8). 캘리브레이션된 B_p의 GFLOP/s당 0.01 FLOP(VFY/100, 여기서 VFY = 1 FLOP). |
 | <a id="param-miner_stake_revocation_latency_blocks"></a>`miner_stake_revocation_latency_blocks` | 604_800 blocks | [§6.1](#61-primitives) |  | 마이너 스테이크 노출 계산에 사용되는 철회/분쟁 지연 윈도우: 필요 자기 스테이크는 cap × 이 윈도우 × stake_rate를 커버해야 한다. |
 | <a id="param-miner_stake_surge_multiplier_ppm"></a>`miner_stake_surge_multiplier_ppm` | 1_250_000 ppm | [§6.1](#61-primitives) |  | 잠정 버스트 상한 스테이크 승수. 1_250_000 ppm = 상한이 아직 버스트/감사 래칫 상태인 동안 노출 스테이크 1.25배. |
-| <a id="param-calibration_min_verified_jobs"></a>`calibration_min_verified_jobs` | 64 jobs | [§6.1](#61-primitives) | D-0433 | D-0433 빠른 서빙 진입 버스트에서의 최소 독립 검증 작업 수. |
-| <a id="param-calibration_min_burst_blocks"></a>`calibration_min_burst_blocks` | 600 blocks | [§6.1](#61-primitives) | D-0433 | D-0433 체인 시간 기준 최소 서빙 진입 버스트(1s 블록 기준 10분). |
-| <a id="param-calibration_min_utilization_ppm"></a>`calibration_min_utilization_ppm` | 500_000 ppm | [§6.1](#61-primitives) |  | 버스트 수락을 위한 지속 가동률 임계값. |
-| <a id="param-calibration_provisional_discount_ppm"></a>`calibration_provisional_discount_ppm` | 900_000 ppm | [§6.1](#61-primitives) |  | min(empirical_burst_cap, discounted_sku_ceiling) 이전에 어테스테이션된 SKU 상한에 적용되는 HARD 티어 잠정 할인. |
-| <a id="param-calibration_lease_blocks"></a>`calibration_lease_blocks` | 604_800 blocks | [§6.1](#61-primitives) | D-0433 | D-0433 갱신 가능한 캘리브레이션 상한 리스(1s 블록 기준 7일). |
-| <a id="param-calibration_renewal_min_verified_jobs"></a>`calibration_renewal_min_verified_jobs` | 8 jobs | [§6.1](#61-primitives) | D-0433 | D-0433 빠른 재시작/오프라인/주기적 상한 갱신을 위한 최소 신규 원샷 고스트 카나리 수. |
-| <a id="param-calibration_renewal_max_age_blocks"></a>`calibration_renewal_max_age_blocks` | 600 blocks | [§6.1](#61-primitives) |  | 마이너가 트리거하는 갱신의 최대 윈도우(1s 블록 기준 10분). |
-| <a id="param-calibration_min_recalibration_interval_blocks"></a>`calibration_min_recalibration_interval_blocks` | 600 blocks | [§6.1](#61-primitives) |  | 수락된 초기 캘리브레이션 사이의 최소 간격(1s 블록 기준 10분). 급속한 상한 교체와 전략적 재시도 루프를 방지한다. |
-| <a id="param-calibration_max_gpu_inventory_entries"></a>`calibration_max_gpu_inventory_entries` | 16 distinct SKUs | [§6.1](#61-primitives) |  | 한 마이너 호스트에서 어테스테이션되는 서로 다른 GPU SKU의 최대 개수. |
+| <a id="param-calibration_min_verified_jobs"></a>`calibration_min_verified_jobs` | 64 jobs | [§7.1](#71-entry--benchmark-burst) | D-0433 | D-0433 빠른 서빙 진입 버스트에서의 최소 독립 검증 작업 수. |
+| <a id="param-calibration_min_burst_blocks"></a>`calibration_min_burst_blocks` | 600 blocks | [§7.1](#71-entry--benchmark-burst) | D-0433 | D-0433 체인 시간 기준 최소 서빙 진입 버스트(1s 블록 기준 10분). 옐로페이퍼 §7.1. |
+| <a id="param-calibration_min_utilization_ppm"></a>`calibration_min_utilization_ppm` | 500_000 ppm | [§7.1](#71-entry--benchmark-burst) |  | 버스트 수락을 위한 지속 가동률 임계값. |
+| <a id="param-calibration_provisional_discount_ppm"></a>`calibration_provisional_discount_ppm` | 900_000 ppm | [§7.1](#71-entry--benchmark-burst) |  | min(empirical_burst_cap, discounted_sku_ceiling) 이전에 어테스테이션된 SKU 상한에 적용되는 HARD 티어 잠정 할인. 옐로페이퍼 §7.1. |
+| <a id="param-calibration_lease_blocks"></a>`calibration_lease_blocks` | 604_800 blocks | [§7.2](#72-renewable-cap) | D-0433 | D-0433 갱신 가능한 캘리브레이션 상한 리스(1s 블록 기준 7일). |
+| <a id="param-calibration_renewal_min_verified_jobs"></a>`calibration_renewal_min_verified_jobs` | 8 jobs | [§7.2](#72-renewable-cap) | D-0433 | D-0433 빠른 재시작/오프라인/주기적 상한 갱신을 위한 최소 신규 원샷 고스트 카나리 수. |
+| <a id="param-calibration_renewal_max_age_blocks"></a>`calibration_renewal_max_age_blocks` | 600 blocks | [§7.2](#72-renewable-cap) |  | 마이너가 트리거하는 갱신의 최대 윈도우(1s 블록 기준 10분). |
+| <a id="param-calibration_min_recalibration_interval_blocks"></a>`calibration_min_recalibration_interval_blocks` | 600 blocks | [§7.1](#71-entry--benchmark-burst) |  | 수락된 초기 캘리브레이션 사이의 최소 간격(1s 블록 기준 10분). 급속한 상한 교체와 전략적 재시도 루프를 방지한다. |
+| <a id="param-calibration_max_gpu_inventory_entries"></a>`calibration_max_gpu_inventory_entries` | 16 distinct SKUs | [§7.1](#71-entry--benchmark-burst) |  | 한 마이너 호스트에서 어테스테이션되는 서로 다른 GPU SKU의 최대 개수. |
 | <a id="param-miner_capacity_stake_sim_per_10_gflop"></a>`miner_capacity_stake_sim_per_10_gflop` | 0.1 FLOP per 10 GFLOP/s | [§6.1](#61-primitives) | D-0418 | miner_capacity_stake_per_gflop의 시뮬레이터 미러(D-0418). |
 
 **컴퓨트 채널 타이밍 경계**
@@ -91,6 +93,7 @@
 | <a id="param-finality_freeze_threshold"></a>`finality_freeze_threshold` | 120 blocks | [§13.0](#130-degraded-state-settlement-policy-normative) |  | 이 값 이상의 파이널리티 지연에서 채널이 Stalled에 진입한다: 파이널리티 의존 신규 open은 fail-closed로 거부된다(ensure_finality_open_allowed); 추가형 top-up/cancel 경로는 열린 상태로 유지된다. |
 | <a id="param-max_finality_stall"></a>`max_finality_stall` | 3_600 blocks | [§13.0](#130-degraded-state-settlement-policy-normative) |  | 이 값 이상의 파이널리티 지연에서 체인은 EscapeEligible(안전 모드)이 된다: AlephBFT 파이널리티를 복구하거나 하드포크 런북을 통해 체크포인트 복구를 비준한다. 1초 블록에서 ~1h. |
 | <a id="param-htlc_timelock_symmetry_safety_margin_percent"></a>`htlc_timelock_symmetry_safety_margin_percent` | 20 percent | [§10.1](#101-requirements) |  | 외부 체인 기간을 1초 FLOP 블록으로 변환한 뒤, 그 기간에 대한 백분율로 표현한 외부 체인 HTLC 최소 안전 마진. |
+| <a id="param-htlc_burn_share_ppt"></a>`htlc_burn_share_ppt` | 0 ppt | [§13.0](#130-degraded-state-settlement-policy-normative) |  | 타임아웃 이후 파이널라이즈된 HTLC 해소에서 지급 전에 소각되는 몫. |
 | <a id="param-btc_block_time_flop_blocks"></a>`btc_block_time_flop_blocks` | 600 blocks | [§10.1](#101-requirements) |  | 1초 FLOP 블록 단위로 표현한 Bitcoin 평균 블록 간격. |
 
 **PoUI 시뮬레이터 모드 안전 플래그(#297 CRIT-02 / RT-C02)**
@@ -98,6 +101,13 @@
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
 | <a id="param-poui_allow_simulator_mode"></a>`poui_allow_simulator_mode` | cfg!(feature = "volta") flag |  |  | #297: AllowSimulatorMode는 TEE 없는 시뮬레이터 크레딧 경로를 게이트한다; `volta` devnet 피처에서 파생되므로 프로덕션 런타임은 fail-closed된다. |
+| <a id="param-paid_storage_enabled"></a>`paid_storage_enabled` | cfg!(feature = "paid-storage-unratified") flag | [§5.4](#54-agent-memory-and-paid-data-storage) |  | 미비준 유료 에이전트 스토리지 팰릿을 위한 빌드 타임 게이트(옐로페이퍼 §5.4, R5.4k). |
+
+**D-0528 스폰서 소유 등록 본드(devnet/testnet 전용)**
+
+| 파라미터 | 값 | § | 결정 | 설명 |
+|-----------|-------|---|----------|-------------|
+| <a id="param-sponsored_self_stake_enabled"></a>`sponsored_self_stake_enabled` | cfg!(feature = "sponsored-self-stake") flag |  | D-0528 | D-0528: 활성 후원 원금이 마이너 용량 본드와 검증자 유효 최소치에 산입되며, 스폰서가 운영자의 등록 본드 전체를 게시할 수 있다(sponsor_register_miner / sponsor_register_validator). |
 
 **PoUI 제출 속도 제한**
 
@@ -122,7 +132,7 @@
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
 | <a id="param-governance_root_track_approval"></a>`governance_root_track_approval` | 67 percent | [§14.2](#142-fip-binding) | D-015 | 루트 / 프로토콜 업그레이드 거버넌스 커브의 고정 승인 임계값(비잔틴 2/3). APP_ROOT로 인코딩되며 프로덕션 protocol_upgrade 트랙에서 사용된다(GOV-A, 옐로페이퍼 §14.2). |
-| <a id="param-protocol_upgrade_support_floor"></a>`protocol_upgrade_support_floor` | 15 percent | [§14.1](#141-requirements) | D-0415 | 프로덕션 protocol_upgrade(Root) 트랙의 투표율 하한(min_support) — 50% 상한에서 15% 하한으로 감쇠(SPEC-024에 없던 쿼럼). |
+| <a id="param-protocol_upgrade_support_floor"></a>`protocol_upgrade_support_floor` | 15 percent | [§14.2](#142-fip-binding) | D-0415 | 프로덕션 protocol_upgrade(Root) 트랙의 투표율 하한(min_support) — 50% 상한에서 15% 하한으로 감쇠(SPEC-024에 없던 쿼럼). |
 
 **합의 / 파이널리티 위원회**
 
@@ -135,7 +145,7 @@
 | <a id="param-finality_committee_size"></a>`finality_committee_size` | 100 count | [§15.4](#154-selection--the-poui-gated-committee) | D-0437 | AlephBFT 파이널라이징 위원회 크기: PoUI 게이트 활성 집합에서 BABE-VRF 시드로 스테이크 가중 비복원 무작위 샘플링(#448/#848). |
 | <a id="param-validator_attestation_threshold"></a>`validator_attestation_threshold` | 666_666_666 perbill-parts | [§3.6](#36-tier-4--on-chain-settlement-zk-aggregation--validator-bft-quorum) | D-0414 | BFT 어테스테이션 쿼럼(Perbill parts 666_666_666 = 2/3), 루트 거버넌스 가능; 직접 PoUI 증명 경로 + 고스트 태스크를 게이트한다. 옐로페이퍼 §3.6/§13.3. |
 | <a id="param-attest_max_verifier_set_members"></a>`attest_max_verifier_set_members` | 100 count | [§15.4](#154-selection--the-poui-gated-committee) |  | 하나의 어테스테이션 프로파일에 저장되는 거버넌스 관리 검증기(verifier) 키의 최대 개수. |
-| <a id="param-attest_max_claim_signatures"></a>`attest_max_claim_signatures` | 100 count | [§15.4](#154-selection--the-poui-gated-committee) |  | 하나의 공유 어테스테이션 클레임에서 수락되는 최대 서명 수; 클레임이 최대 거버넌스 관리 활성 집합을 초과할 수 없도록 검증기 집합 경계와 일치시킨다. |
+| <a id="param-attest_max_claim_signatures"></a>`attest_max_claim_signatures` | 100 count | [§15.4](#154-selection--the-poui-gated-committee) |  | `pallet_attest` 공유 클레임 레일이 수락하는 최대 서명 수; 그 레일의 100명 거버넌스 검증자 집합 한계와 일치하며, 디스패치 웨이트와 블록 길이로 한정되는 `pallet_flop_poui` `submit_validator_attestations` 번들에는 상한을 두지 않는다. |
 | <a id="param-poui_tee_v1_profile_id"></a>`poui_tee_v1_profile_id` | H256([4u8; 32]) profile-id | [§15.4](#154-selection--the-poui-gated-committee) |  | PoUI TEE v1 클레임을 위한 거버넌스 관리 공유 어테스테이션 프로파일 id. |
 | <a id="param-poui_tee_v1_profile_version"></a>`poui_tee_v1_profile_version` | 1 profile-version | [§15.4](#154-selection--the-poui-gated-committee) |  | PoUI TEE v1 클레임의 초기 프로파일 버전. |
 
@@ -144,27 +154,32 @@
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
 | <a id="param-validator_rotation_interval_blocks"></a>`validator_rotation_interval_blocks` | 2_592_000 blocks | [§15.5](#155-rotation--set-size) | D-0416 | 검증자 집합 로테이션 주기(1s 기준 약 30일); 자동 on_initialize + 수동 rotate. 옐로페이퍼 §15.5. |
-| <a id="param-validators_to_eject"></a>`validators_to_eject` | 50 count | [§15.5](#155-rotation--set-size) |  | 로테이션당 퇴출 수(스테이크 기준 하위, 단 작업 최근성 및 성능 하한 적용). 옐로페이퍼 §15.5의 목표치이며, 현재 라이브 순위는 작업 최근성/성능 기준이다(스테이크 순 정렬은 PARTIAL, 부록 H). |
+| <a id="param-validators_to_eject"></a>`validators_to_eject` | 50 count | [§15.5](#155-rotation--set-size) |  | 로테이션당 요청 최대치; 실제 방출은 점수화된 증거도 요구하며(블랙리스트된 의석은 증거가 필요 없고 가장 먼저 방출된다), 이탈 비율과 최소 활성 집합을 준수한다. |
 | <a id="param-validators_to_promote"></a>`validators_to_promote` | 50 count | [§15.5](#155-rotation--set-size) |  | 로테이션당 대기열에서의 승격 수(스테이크 >= 현재 최소치). 옐로페이퍼 §15.5. |
-| <a id="param-ejection_cooldown_blocks"></a>`ejection_cooldown_blocks` | 604_800 blocks | [§15.5](#155-rotation--set-size) |  | 퇴출된 검증자가 재합류할 수 있기까지의 쿨다운(약 7일)(스테이크를 현재 최소치까지 보충). 옐로페이퍼 §15.5. |
+| <a id="param-validator_active_set_cap"></a>`validator_active_set_cap` | 1_000 count | [§9.3](#93-genesis-configuration) | D-0437 | ActiveValidators의 최대 활성 검증자 수(ValidatorQueue로부터의 로테이션 승격 또는 직접적인 un_jail/rejoin 복귀로 받아들여짐). 옐로페이퍼 §9.3 R9.9, §15.5. |
+| <a id="param-validator_min_active_validators"></a>`validator_min_active_validators` | 4 count | [§15.5](#155-rotation--set-size) |  | 로테이션과 모든 제거 경로가 보존하는 최소 활성 집합. |
+| <a id="param-validator_rotation_churn_percent"></a>`validator_rotation_churn_percent` | 10 percent | [§15.5](#155-rotation--set-size) |  | 한 번의 로테이션에서 방출되는 현재 활성 집합의 최대 비율로, 검증자 1명 단위로 올림한다. |
+| <a id="param-validator_min_scored_samples"></a>`validator_min_scored_samples` | 3 count | [§15.5](#155-rotation--set-size) |  | 검증자가 방출될 수 있기 전에 한 로테이션 간격 내에 필요한 성능 점수 갱신 횟수. |
+| <a id="param-ejection_cooldown_blocks"></a>`ejection_cooldown_blocks` | 604_800 blocks | [§15.5](#155-rotation--set-size) |  | 로테이션으로 방출된 검증자(방출 시 자기 스테이크 동결이 해동됨)가 effective_minimum_stake로 ValidatorQueue에 재등록할 수 있기까지의 쿨다운(~7 d); Config에 구성되며, register에서의 강제는 대기 중. |
 | <a id="param-validator_unbonding_blocks"></a>`validator_unbonding_blocks` | 1_814_400 blocks | [§13](#13-failure-semantics--actor--failure-matrix) | D-0419 | 검증자 스테이크 언본딩 락업(약 21일); 위법 행위 후 인출을 제한한다. 옐로페이퍼 §13. |
 | <a id="param-validator_extended_downtime_slash_percent"></a>`validator_extended_downtime_slash_percent` | 5 percent | [§13.2](#132-validator-consensus--da--leader-duties) | D-0409 | 장기 검증자 다운타임에 대한 슬래시 비율(이후 제거). 옐로페이퍼 §13.2. |
-| <a id="param-validator_growth_numerator"></a>`validator_growth_numerator` | 109 ratio | [§11](#11-security-invariants) | D-0413 | 검증자 최소 스테이크 하한에 대한 연간 복리 계수의 분자(109/100 = +9%/yr). 옐로페이퍼 §11/§15.2. |
-| <a id="param-validator_growth_denominator"></a>`validator_growth_denominator` | 100 ratio | [§11](#11-security-invariants) | D-0413 | validator_growth_numerator와 짝을 이루는 분모(109/100 = +9%/yr). 옐로페이퍼 §11/§15.2. |
+| <a id="param-validator_growth_numerator"></a>`validator_growth_numerator` | 109 ratio | [§15.2](#152-onboarding-normative) | D-0413 | 검증자 최소 스테이크 하한에 대한 연간 복리 계수의 분자(109/100 = +9%/yr). 옐로페이퍼 §15.2. |
+| <a id="param-validator_growth_denominator"></a>`validator_growth_denominator` | 100 ratio | [§15.2](#152-onboarding-normative) | D-0413 | validator_growth_numerator와 짝을 이루는 분모(109/100 = +9%/yr). 옐로페이퍼 §15.2. |
 
 **미터링 트립와이어**
 
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
-| <a id="param-throughput_tripwire_gflops_per_sec"></a>`throughput_tripwire_gflops_per_sec` | 2_000_000 GFLOPS/s | [§4.2](#42-the-op-count-model) | D-0405 | 암시된 gn*1000/latency_ms가 이 값을 초과하는 모든 클레임을 거부한다(절대 클램프하지 않음); 거부 전용, 거버넌스 가능, 기본 켜짐. 옐로페이퍼 §4.2. |
-| <a id="param-soft_tier_spot_check_rate_ppm"></a>`soft_tier_spot_check_rate_ppm` | 25_000 ppm | [§4.2](#42-the-op-count-model) |  | 품질 감사 가격 책정을 위해 캘리브레이션 스냅숏 이벤트와 함께 노출되는 SOFT 티어 채널 스팟체크 노출도. |
+| <a id="param-throughput_tripwire_gflops_per_sec"></a>`throughput_tripwire_gflops_per_sec` | 2_000_000 G_n/s | [§4.2](#42-the-op-count-model) | D-0405 | 암시된 gn*1000/latency_ms가 이 값을 초과하는 모든 클레임을 거부한다(절대 클램프하지 않음); 거부 전용, 거버넌스 가능, 기본 켜짐. 옐로페이퍼 §4.2. |
+| <a id="param-soft_tier_spot_check_rate_ppm"></a>`soft_tier_spot_check_rate_ppm` | 25_000 ppm | [§7.1](#71-entry--benchmark-burst) |  | 품질 감사 가격 책정을 위해 캘리브레이션 스냅숏 이벤트와 함께 노출되는 SOFT 티어 채널 스팟체크 노출도. 옐로페이퍼 §7.1. |
 
 **컴퓨트 채널 정산**
 
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
-| <a id="param-refund_penalty_phi_percent"></a>`refund_penalty_phi_percent` | 20 percent | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0422 | 모호한 조기 종료 시 미사용 에스크로에 적용되는 정적 D-0422 페널티 비율 phi; 페널티는 100% 소각/재단으로 라우팅되며 절대 마이너에게 가지 않는다. |
+| <a id="param-refund_penalty_phi_percent"></a>`refund_penalty_phi_percent` | 20 percent | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0422 | 모호한 조기 종료 시 미사용 에스크로에 부과되는 정적 D-0422 페널티 비율 phi; 페널티는 소각 없이 100% FLOPFoundationAccount로 라우팅되며(R9.10), 결코 마이너에게 가지 않는다. |
 | <a id="param-channel_max_settlement_turns"></a>`channel_max_settlement_turns` | 1_024 count | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) |  | settle/force_settle 번들당 VerifiedTurns의 하드 상한이자, 개설 시점 SLA의 max_turns 상한. |
+| <a id="param-channel_max_session_activation_bytes"></a>`channel_max_session_activation_bytes` | 65_536 bytes | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) |  | 자금이 조달된 Open 세션의 활성화당 DA 할당 상한. |
 | <a id="param-channel_max_merkle_path_len"></a>`channel_max_merkle_path_len` | 64 count | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) |  | VerifiedTurn당 최대 머클 인증 경로 길이(최대 2^64개 리프를 가진 트리에서의 멤버십을 증명한다). |
 | <a id="param-channel_base_per_turn"></a>`channel_base_per_turn` | 1 base unit (10^-18 FLOP) | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) |  | 2부 요금제(#719 옵션 A)의 턴당 정액 요금: turn_pay = BasePerTurn + G_n(채널 지급 단위에서 rate=1). |
 | <a id="param-channel_c_turn_fixed"></a>`channel_c_turn_fixed` | 1 base unit (10^-18 FLOP) | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) |  | BasePerTurn이 반드시 충당해야 하는 턴당 고정 비용 하한(#719). integrity_test는 BasePerTurn ≥ CTurnFixed를 단언하여 더스트 턴이 마이너/네트워크에 순손실이 되지 않게 한다. |
@@ -172,9 +187,11 @@
 | <a id="param-channel_dispute_response_window_blocks"></a>`channel_dispute_response_window_blocks` | 7_200 blocks | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0403 | 개시된 분쟁에 응답할 시간(2시간); 무응답은 기본적으로 사기 판정으로 처리된다. 옐로페이퍼 §12.1. |
 | <a id="param-channel_toploc_escalation_window_blocks"></a>`channel_toploc_escalation_window_blocks` | 7_200 blocks | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0431 | #754: 중간 대역 TOPLOC 에스컬레이션을 검증자들이 해소할 윈도우(2시간) — 더 강한 신고 → 슬래시, 또는 쿼럼 무혐의 — 결론 없이 타임아웃되기 전까지(에이전트 전액 환불, 마이너 지급 없음, 슬래시 없음). |
 | <a id="param-channel_challenger_bond"></a>`channel_challenger_bond` | 100 FLOP | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) |  | 챌린저가 세션 분쟁을 개시하기 위해 예치하는 본드(그리핑 방지). 옐로페이퍼 §12.1. |
-| <a id="param-slash_fraud_percent"></a>`slash_fraud_percent` | 100 percent | [§13.2](#132-validator-consensus--da--leader-duties) | D-0409 | 전액 소각 결함 등급: 담합 / 증거 위조 / TEE 어테스테이션 실패 / 상관된 이중 서명 / 이중 지불 → 100% 슬래시 + 퇴출 + 블랙리스트. 옐로페이퍼 §13.2. |
+| <a id="param-slash_fraud_percent"></a>`slash_fraud_percent` | 100 percent | [§13.2](#132-validator-consensus--da--leader-duties) | D-0529 | 전액 슬래시 결함 등급(D-0529에 따라 소각 없이 100% FLOPFoundationAccount로 라우팅): Collusion / EvidenceForgery / TEE 어테스테이션 실패 / 상관 이중 서명 / 이중 지불 → 100% 슬래시 + 방출 + 블랙리스트. 옐로페이퍼 §13.2. |
 | <a id="param-channel_audit_forfeit_slash_ppm"></a>`channel_audit_forfeit_slash_ppm` | 1_000_000 ppm | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0403 | #844 공개-또는-몰수(publish-or-forfeit): 감사 데이터 라이브니스 몰수 슬래시 하한으로, 보류된 정산 윈도우 가치의 ppm 단위. |
-| <a id="param-audit_fee_split_ppm"></a>`audit_fee_split_ppm` | 10_000 ppm | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0403 | #846: 마이너 정산 지급액(세션 수수료 레그; 옐로페이퍼 §12.1)의 1%(10_000 ppm)를 비준하여, 검증자에게 감사 작업 대가를 지급하는 감사 풀로 분리한다. |
+| <a id="param-inference_fee_miner_share_ppt"></a>`inference_fee_miner_share_ppt` | 850 parts-per-thousand | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0525 | #2702(D-0525): 경영진 결정(Shu, 2026-10-14). |
+| <a id="param-inference_fee_validator_share_ppt"></a>`inference_fee_validator_share_ppt` | 150 parts-per-thousand | [§9](#9-emission--supply) | D-0525 | #2702(D-0525): 경영진 결정(Shu, 2026-10-14). |
+| <a id="param-audit_fee_split_ppm"></a>`audit_fee_split_ppm` | 10_000 ppm | [§9](#9-emission--supply) | D-0403 | #846, #2702(D-0525): 정산 지급액의 비준된 1%(10_000 ppm)를 15% 검증자 수수료 레그에서 충당하여, 감사 작업에 대해 검증자에게 지급하는 감사 풀에 넣는다. |
 | <a id="param-audit_fee_per_turn"></a>`audit_fee_per_turn` | 1 FLOP | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0403 | #846: VRF로 배정된 검증자가 감사 판정 건당 감사 풀에서 청구하는 정액 수수료(claim_audit_fee). 제출된 증거와 풀의 지급 능력에 따라 게이트된다(미지급 의무 경로 없음). 1 FLOP은 자리표시값이며, 거버넌스가 측정된 감사 비용에 맞춰 재보정할 수 있다. |
 | <a id="param-channel_ack_window_blocks"></a>`channel_ack_window_blocks` | 600 blocks | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) |  | 만료로 에스크로가 환불되기 전에, 지정된 마이너가 퍼미션리스 force_open을 force_ack할 수 있는 윈도우. 옐로페이퍼 §12.1, 부록 C.3. |
 | <a id="param-min_force_open_escrow_for_failed_ack"></a>`min_force_open_escrow_for_failed_ack` | 0.05 FLOP | [§12.1](#121-sessions--attested-streaming--aggregate-settlement) | D-0423 | 만료되고 ack되지 않은 요청이 지정 마이너의 FailedAcks 카운터를 증가시키게 하는 최소 force_open 에스크로. |
@@ -199,7 +216,7 @@
 
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
-| <a id="param-tokens_per_byte_band_ppm_llama3"></a>`tokens_per_byte_band_ppm_llama3` | 500_000 ppm | [§4](#4-effective-flop-metering) |  | Llama-3 토크나이저에 대한 정직한 바이트당 토큰 수의 인증된 상한(ppm; 500000 = 0.5 tokens/byte) — (모델, 토크나이저)별 모델 레지스트리 필드로서, 미터링 인증서 패딩 제약 (e)를 제한한다: n_tokens ≤ ⌈bytes · band/1e6⌉ (#871, 명세 whitepaper/research/metering-cert-spec.md §4). |
+| <a id="param-tokens_per_byte_band_ppm_llama3"></a>`tokens_per_byte_band_ppm_llama3` | 500_000 ppm | [§4](#4-effective-flop-metering) |  | Llama-3 토크나이저의 정직한 바이트당 토큰 수에 대한 인증된 상한(ppm; 500000 = 0.5 토큰/바이트) — 미터링 인증서 패딩 제약 (e)를 제한하는 (모델, 토크나이저)별 모델 레지스트리 필드: prompt_tokens ≤ ⌈len(input_bytes) · band/1e6⌉ 및 generated_tokens ≤ ⌈(len(output_bytes) + 1) · band/1e6⌉(#871, 명세 whitepaper/research/metering-cert-spec.md §4). |
 
 **미터링 인증서 회로 버전 + 게스트 image-id 레지스트리(#929)**
 
@@ -212,8 +229,8 @@
 
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
-| <a id="param-tx_fee_burn_percent_live"></a>`tx_fee_burn_percent_live` | 10 percent | [§9.1](#91-requirements) |  | base+length+weight 트랜잭션 수수료의 LIVE 소각 비율(10%). |
-| <a id="param-tx_fee_author_share_percent_live"></a>`tx_fee_author_share_percent_live` | 100 percent | [§9](#9-emission--supply) |  | 소각되지 않은 잔여분 중 블록 작성자에게 지급되는 LIVE 몫(= 10% 소각 후 전체 수수료의 90%). |
+| <a id="param-tx_fee_burn_percent_live"></a>`tx_fee_burn_percent_live` | 0 percent | [§9.1](#91-requirements) | D-0529 | base+length+weight 트랜잭션 수수료의 LIVE 소각 비율(0%; D-0529). |
+| <a id="param-tx_fee_author_share_percent_live"></a>`tx_fee_author_share_percent_live` | 100 percent | [§9](#9-emission--supply) | D-0529 | 블록 작성자에게 지급되는 트랜잭션 수수료의 LIVE 몫(0% 소각 하에서 전체 수수료의 100%, D-0529). |
 | <a id="param-tx_weight_to_fee"></a>`tx_weight_to_fee` | 5_000_000 base units/weight (1 base unit = 10^-18 FLOP) | [§9.1](#91-requirements) |  | WeightToFee ConstantMultiplier; 기본 수수료의 weight당 구성분(실효 하한: MinimumMultiplier = 1.0). 옐로페이퍼 §9.1. |
 | <a id="param-tx_length_to_fee"></a>`tx_length_to_fee` | 5_000_000 base units/byte (1 base unit = 10^-18 FLOP) | [§9.1](#91-requirements) |  | LengthToFee ConstantMultiplier; 기본 수수료의 바이트당 구성분. 옐로페이퍼 §9.1. |
 | <a id="param-tx_target_block_fullness_percent"></a>`tx_target_block_fullness_percent` | 75 percent | [§9.1](#91-requirements) |  | TargetedFeeAdjustment 승수의 혼잡 목표치(블록이 찰수록 수수료를 기본 하한 위로 올린다). 옐로페이퍼 §9.1. |
@@ -232,6 +249,7 @@
 
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
+| <a id="param-agent_cap_window_blocks"></a>`agent_cap_window_blocks` | 86_400 blocks | [§6.2](#62-agent-autonomy--operating-without-per-action-consensus) |  | 지갑 및 세션 일일 지출 상한 윈도: 지갑 또는 세션 생성 시점, 또는 직전 리셋 시점으로부터 86,400 블록 이후 또는 그 시점의 첫 지출에서 리셋된다. |
 | <a id="param-agent_identity_min_stake"></a>`agent_identity_min_stake` | 10 FLOP | [§12.3](#123-market-actor-threat-class) |  | 에이전트 아이덴티티를 등록하기 위해 잠기는 환불 가능한 최소 스테이크: 회수 불가능한 아이덴티티 비용이 아니라 자본 노출이다. 옐로페이퍼 §12.3. |
 | <a id="param-circuit_breaker_window"></a>`circuit_breaker_window` | 60 blocks | [§6.2](#62-agent-autonomy--operating-without-per-action-consensus) |  | 고정된 에이전트 세션 키 서킷 브레이커 윈도우(60 blocks): 트랜잭션 수 또는 지출 중 어느 한 갈래(limb)라도 독립적으로 트립되며, 윈도우 종료까지 래치된 뒤 자동으로 리셋된다. 옐로페이퍼 §6.2. |
 | <a id="param-circuit_breaker_tx_count"></a>`circuit_breaker_tx_count` | 100 count | [§6.2](#62-agent-autonomy--operating-without-per-action-consensus) |  | 에이전트 세션 키 서킷 브레이커의 트랜잭션 수 갈래(limb): circuit_breaker_flop_cap과 독립적으로 윈도우 내 100건의 tx에서 트립된다. 옐로페이퍼 §6.2. |
@@ -241,6 +259,8 @@
 
 | 파라미터 | 값 | § | 결정 | 설명 |
 |-----------|-------|---|----------|-------------|
+| <a id="param-validator_min_self_stake_ratio_percent"></a>`validator_min_self_stake_ratio_percent` | 20 percent | [§15.2](#152-onboarding-normative) |  | 후원 보증이 활성화된 경우의 레거시 최소 검증자 자기 스테이크 비율(§15.2). |
+| <a id="param-validator_work_recency_window_blocks"></a>`validator_work_recency_window_blocks` | 86_400 blocks | [§15.2](#152-onboarding-normative) |  | PoUI 위원회 적격성을 위한, 수락된 검증 의무의 최근성 윈도(§15.2, R15.4c). |
 | <a id="param-protocol_upgrade_approval"></a>`protocol_upgrade_approval` | 67 percent | [§14.2](#142-fip-binding) | GOV-A | 프로덕션 protocol_upgrade(Root) 트랙 승인(고정 BFT 2/3); APP_ROOT로 라이브(위에서 governance_root_track_approval + protocol_upgrade_support_floor로 강제됨). |
 | <a id="param-protocol_upgrade_decision_period"></a>`protocol_upgrade_decision_period` | 28 days | [§14.2](#142-fip-binding) |  | [RATIFY] protocol_upgrade 트랙의 심의 윈도우. 옐로페이퍼 §14.2. |
 | <a id="param-protocol_upgrade_enactment_timelock"></a>`protocol_upgrade_enactment_timelock` | 1_209_600 blocks | [§14.1](#141-requirements) |  | 1s 기준 14일 — Scheduler min_enactment_period(업그레이드 타임락). 옐로페이퍼 §14.1. |
@@ -249,17 +269,16 @@
 | <a id="param-emergency_override_cooldown"></a>`emergency_override_cooldown` | 604_800 blocks |  | SPEC-015 | 1s 기준 7일 — 비상 오버라이드 사이의 최소 간격. |
 | <a id="param-governance_vote_locking_period"></a>`governance_vote_locking_period` | 604_800 blocks |  |  | 7일 컨빅션 VoteLockingPeriod(pallet_conviction_voting, 라이브).. |
 | <a id="param-sudo_pallet_index"></a>`sudo_pallet_index` | 50 index | [§14.1](#141-requirements) | GOV-B | pallet_sudo — devnet/testnet 구간에서 Root를 부트스트랩한다; 메인넷 제네시스 인계 시점에 제거/무력화된다(GOV-B). 옐로페이퍼 §14.1. |
-| <a id="param-subsidy_total_per_block"></a>`subsidy_total_per_block` | 16 FLOP | [§9](#9-emission--supply) | D-0436 | 반감 에라 0(1~2년차)에 Labs 8 + Foundation 8로, 96 FLOP 보상에 더해진다(옐로페이퍼 §9); 보상과 함께 반감하며(합산 16 -> 8 -> 4 -> 2 -> 1), 보상이 하한에 도달하는 era 5부터 정확히 0이 된다. |
-| <a id="param-emission_at_end_of_era6"></a>`emission_at_end_of_era6` | 12_109_824_000 FLOP |  | D-0436 | 2·R₀·H = 12,109,824,000으로, max_halvings=5 하에서 에라 6 종료 시점(약 14년차)에 정확히 도달한다 — 대체된 maxHalvings=6이 두었던 시점보다 한 에라 이르다(따라서 emission_at_end_of_era7에서 이름이 바뀌었다). |
-| <a id="param-emission_through_halving_eras"></a>`emission_through_halving_eras` | 11_920_608_000 FLOP |  | D-0436 | R₀·H·63/32 = 63,072,000 × (96+48+24+12+6+3) = max_halvings=5 하에서 반감 단계(에라 5 종료, 약 12년차)까지의 누적 발행량. |
+| <a id="param-subsidy_total_per_block"></a>`subsidy_total_per_block` | 16 FLOP | [§9](#9-emission--supply) | D-0436 | 반감 에라 0(1~2년차)에 Labs 8 + Foundation 8로, 96 FLOP 보상에 더해진다(옐로페이퍼 §9); 보상과 함께 반감하며(`era(b) = ⌊b / H⌋`: 합산 16 -> 8 -> 4 -> 2 -> 1), 보상이 하한에 도달하는 era 5(`b = 315,360,000`)부터 정확히 0이 된다. |
+| <a id="param-emission_at_end_of_era6"></a>`emission_at_end_of_era6` | 12_109_823_904 FLOP |  | D-0436 | 2·R₀·H − R₀ = 12,109,823,904(보상 없는 제네시스 블록 0을 빼기 전에는 2·R₀·H = 12,109,824,000, R9.7)로, max_halvings=5 하에서 에라 6 종료 시점(블록 441,503,999, 약 14년차)에 도달한다 — 대체된 maxHalvings=6이 두었던 시점보다 한 에라 이르다(따라서 emission_at_end_of_era7에서 이름이 바뀌었다). |
+| <a id="param-emission_through_halving_eras"></a>`emission_through_halving_eras` | 11_920_607_904 FLOP |  | D-0436 | R₀·H·63/32 − R₀ = 63,072,000 × (96+48+24+12+6+3) − 96 = 11,920,607,904(보상 없는 제네시스 블록 0을 빼기 전에는 11,920,608,000, R9.7) = max_halvings=5 하에서 반감 국면 전체(에라 5 종료, 블록 378,431,999, 약 12년차)의 누적 발행량. |
 | <a id="param-floor_annual_emission"></a>`floor_annual_emission` | 94_608_000 FLOP |  | D-0436 | 영구 하한 테일: 3 FLOP/block × 31,536,000 blocks/yr(= 189,216,000 FLOP/era). |
-| <a id="param-max_delegators_per_miner"></a>`max_delegators_per_miner` | 10_000 count |  |  |  |
-| <a id="param-agent_daily_cap_autonomous"></a>`agent_daily_cap_autonomous` | 500 FLOP |  |  |  |
+| <a id="param-max_delegators_per_miner"></a>`max_delegators_per_miner` | 10_000 count | [§6.1](#61-primitives) | D-0530 | [DEPRECATED — D-0530] 운영자 자기 스테이크 전용 결정(§6.1, §15.2)으로 대체됨; 레거시 MinerStaking.MaxDelegatorsPerMiner 상수는 팰릿 정리 전까지 유지된다. |
+| <a id="param-agent_daily_cap_autonomous"></a>`agent_daily_cap_autonomous` | 500 FLOP | [§6.2](#62-agent-autonomy--operating-without-per-action-consensus) |  | 시뮬레이터의 자율 에이전트 시나리오 일일 상한; 런타임은 전역 500 FLOP 상수를 강제하지 않고 create_wallet 시점에 각 지갑이 선택한 daily_cap을 저장한다; 옐로페이퍼 §6.2. |
 | <a id="param-agent_per_tx_limit"></a>`agent_per_tx_limit` | 100 FLOP |  |  |  |
 | <a id="param-attestation_outage_pause_cap_blocks"></a>`attestation_outage_pause_cap_blocks` | 14_400 blocks | [§13.0](#130-degraded-state-settlement-policy-normative) |  | R13.0e / O1에 따른 어테스테이션 의존 클록의 채널별 일시정지에 대한 4 h 상한으로, 설계되었으나 구현되지 않았다; 런타임이나 팔레트 구현 위치가 없다. 옐로페이퍼 §13.0. |
 | <a id="param-da_endpoint_deposit"></a>`da_endpoint_deposit` | VFY (= 1 FLOP) |  |  | 검증자의 DA 서빙 엔드포인트 공지가 DaRegistry에 존재하는 동안 보유되는 환불 가능한 스팸 방지 예치금. 1 VFY = 1 FLOP. HoldReason 하에 보유되며, clear_endpoint 시 전액 해제된다. |
 | <a id="param-da_max_endpoint_bytes"></a>`da_max_endpoint_bytes` | 256 bytes |  |  | DaRegistry에 저장되는 검증자 DA 서빙 엔드포인트 URL의 최대 UTF-8 바이트 길이(예: 'http://host:7000'). |
-| <a id="param-validator_active_set_cap"></a>`validator_active_set_cap` | 1_000 count | [§15.5](#155-rotation--set-size) | D-0437 | 검증자 ACTIVE 집합에 대한 비준된 상한(D-0437). |
 | <a id="param-validator_stake_value_coupled_floor"></a>`validator_stake_value_coupled_floor` | dynamic FLOP |  | D-0413 | D-0413 (C5): 거버넌스가 재설정하는 가치 연동 스테이크 하한 k·V_booked(스토리지 ValueCoupledStakeFloor, 기본값 0 = 기준선과 동일). |
 | <a id="param-security_kappa_extractable"></a>`security_kappa_extractable` | 0.2 dimensionless |  | DEC-5 | 가정(ASSUMPTION) — 정리가 아니다; 거버넌스/DEC-5 리스크 입력값이다. κ = AlephBFT 안전성 침해에 성공했을 때 추출되는 실현 가치 V_booked의 비율; 이는 가치 연동 스테이크 하한이 기대는 레버다(k ≥ m·κ/(θ·N·σ·δ), κ에 선형 — k_threshold_scales_with_kappa). |
 | <a id="param-da_deposit_max_step_factor"></a>`da_deposit_max_step_factor` | 100 ratio |  |  | pallet_da_registry MAX_DEPOSIT_STEP_FACTOR: 한 번의 set_deposit_per_byte 호출은 예치금을 어느 방향으로든 ≤100배까지만 이동시킬 수 있다(쇼크 방지; 하드 하한은 >0). |
@@ -273,7 +292,7 @@
 
 **교차 언어 이름(정식 ⇄ Rust ⇄ Lean ⇄ Quint).** 동일한 프로토콜 값이 관례상 언어마다 다른 식별자를 갖는다; 어떤 언어가 실제(데모가 아닌) 수치를 고정한 경우 값은 일치한다. 강제 행은 `check_params.py`에 의해 Rust 지점을 기준으로 값이 게이트된다.
 
-| 파라미터 | Rust (runtime) | Lean (formal-specs/lean) | Quint (formal-specs) |
+| 파라미터 | Rust (runtime) | Lean (lean-proofs) | Quint (formal-specs) |
 |-----------|----------------|--------------------------|----------------------|
 | [`genesis_supply`](#param-genesis_supply) | `FLOP_TOTAL_SUPPLY` | `HalvingBoundary.genesisSupply` | `GENESIS_MICRO` |
 | [`validator_min_stake`](#param-validator_min_stake) | `ValidatorInitialMinimumStake` | — | — |
@@ -284,6 +303,8 @@
 | [`validator_share_ppt`](#param-validator_share_ppt) | `VALIDATOR_SHARE_PPT` | `SettlementInt.BlockRewards.validatorPpt` | — |
 | [`agent_share_ppt`](#param-agent_share_ppt) | `AGENT_SHARE_PPT` | `SettlementInt.BlockRewards.agentPpt` | — |
 | [`staker_share_ppt`](#param-staker_share_ppt) | `STAKER_SHARE_PPT` | `SettlementInt.BlockRewards.stakerPpt` | — |
+| [`reward_distribution_period_blocks`](#param-reward_distribution_period_blocks) | `RewardDistributionPeriodBlocks` | — | `PERIOD_BLOCKS` |
+| [`gn_decay_factor_ppb`](#param-gn_decay_factor_ppb) | `DEFAULT_GN_DECAY_FACTOR_PPB` | — | `DEFAULT_DECAY_PPB` |
 | [`finality_committee_premium_weight_ppm`](#param-finality_committee_premium_weight_ppm) | `FINALITY_COMMITTEE_PREMIUM_WEIGHT_PPM` | — | — |
 | [`poui_submission_window_blocks`](#param-poui_submission_window_blocks) | `PouiEpochDurationBlocks` | — | — |
 | [`poui_max_submissions_epoch`](#param-poui_max_submissions_epoch) | `PouiMaxSubmissionsPerEpoch` | — | — |
@@ -300,6 +321,10 @@
 | [`validator_rotation_interval_blocks`](#param-validator_rotation_interval_blocks) | `RotationIntervalBlocks` | — | — |
 | [`validators_to_eject`](#param-validators_to_eject) | `ValidatorsToEject` | — | — |
 | [`validators_to_promote`](#param-validators_to_promote) | `ValidatorsToPromote` | — | — |
+| [`validator_active_set_cap`](#param-validator_active_set_cap) | `ValidatorActiveSetCap` | — | — |
+| [`validator_min_active_validators`](#param-validator_min_active_validators) | `ValidatorMinActiveValidators` | — | — |
+| [`validator_rotation_churn_percent`](#param-validator_rotation_churn_percent) | `ValidatorRotationChurnPercent` | — | — |
+| [`validator_min_scored_samples`](#param-validator_min_scored_samples) | `ValidatorMinScoredSamples` | — | — |
 | [`ejection_cooldown_blocks`](#param-ejection_cooldown_blocks) | `EjectionCooldownBlocks` | — | — |
 | [`validator_unbonding_blocks`](#param-validator_unbonding_blocks) | `ValidatorUnbondingPeriodBlocks` | — | — |
 | [`validator_extended_downtime_slash_percent`](#param-validator_extended_downtime_slash_percent) | `ValidatorExtendedDowntimeSlash` | — | — |
@@ -308,6 +333,7 @@
 | [`throughput_tripwire_gflops_per_sec`](#param-throughput_tripwire_gflops_per_sec) | `PouiGnThroughputCeilingGflopsPerSec` | — | — |
 | [`refund_penalty_phi_percent`](#param-refund_penalty_phi_percent) | `ChannelRefundPenalty` | — | — |
 | [`channel_max_settlement_turns`](#param-channel_max_settlement_turns) | `ChannelMaxSettlementTurns` | — | — |
+| [`channel_max_session_activation_bytes`](#param-channel_max_session_activation_bytes) | `ChannelMaxSessionActivationBytes` | — | — |
 | [`channel_max_merkle_path_len`](#param-channel_max_merkle_path_len) | `ChannelMaxMerklePathLen` | — | — |
 | [`channel_base_per_turn`](#param-channel_base_per_turn) | `ChannelBasePerTurn` | — | — |
 | [`channel_c_turn_fixed`](#param-channel_c_turn_fixed) | `ChannelCTurnFixed` | — | — |
@@ -316,6 +342,8 @@
 | [`channel_toploc_escalation_window_blocks`](#param-channel_toploc_escalation_window_blocks) | `ChannelToplocEscalationWindow` | — | — |
 | [`channel_challenger_bond`](#param-channel_challenger_bond) | `ChannelChallengerBond` | — | — |
 | [`channel_audit_forfeit_slash_ppm`](#param-channel_audit_forfeit_slash_ppm) | `ChannelAuditForfeitSlashPpm` | — | — |
+| [`inference_fee_miner_share_ppt`](#param-inference_fee_miner_share_ppt) | `INFERENCE_FEE_MINER_SHARE_PPT` | — | — |
+| [`inference_fee_validator_share_ppt`](#param-inference_fee_validator_share_ppt) | `INFERENCE_FEE_VALIDATOR_SHARE_PPT` | — | — |
 | [`audit_fee_split_ppm`](#param-audit_fee_split_ppm) | `ChannelAuditFeeSplitPpm` | — | — |
 | [`audit_fee_per_turn`](#param-audit_fee_per_turn) | `ChannelAuditFeePerTurn` | — | — |
 | [`channel_ack_window_blocks`](#param-channel_ack_window_blocks) | `ChannelAckWindow` | — | — |
@@ -335,10 +363,13 @@
 | [`da_shard_count`](#param-da_shard_count) | `DaReplicationFactor` | — | — |
 | [`da_min_replication_factor`](#param-da_min_replication_factor) | `MIN_REPLICATION_FACTOR` | `k` | — |
 | [`da_lease_deposit_per_byte`](#param-da_lease_deposit_per_byte) | `DaDepositPerByte` | — | — |
+| [`agent_cap_window_blocks`](#param-agent_cap_window_blocks) | `AgentEpochLength` | — | — |
 | [`agent_identity_min_stake`](#param-agent_identity_min_stake) | `AgentIdentityMinStake` | — | — |
 | [`circuit_breaker_window`](#param-circuit_breaker_window) | `SessionKeysCircuitBreakerPeriod` | — | — |
 | [`circuit_breaker_tx_count`](#param-circuit_breaker_tx_count) | `SessionKeysCircuitBreakerMaxTxs` | — | — |
 | [`circuit_breaker_flop_cap`](#param-circuit_breaker_flop_cap) | `SessionKeysCircuitBreakerMaxSpend` | — | — |
+| [`validator_min_self_stake_ratio_percent`](#param-validator_min_self_stake_ratio_percent) | `ValidatorMinSelfStakeRatio` | — | — |
+| [`validator_work_recency_window_blocks`](#param-validator_work_recency_window_blocks) | `ValidatorWorkRecencyWindow` | — | — |
 
 <!-- END GENERATED: param-table -->
 
@@ -351,7 +382,7 @@
 | 파이널리티 / BFT 내성 | 순서가 정해지면 결정적; 지연 목표 없음 / 비잔틴 위원회 좌석 엄격히 < ⅓ | [2.1](#21-requirements) | D-0401, D-0501, D-0502 |
 | 위원회 선정 | PoUI 게이트: 스테이크 + 최근 수락된 검증 임무(`hp-consensus::select_committee`; R15.4c) | [2.1](#21-requirements) / [2.3](#23-safety--the-three-sub-proofs) / [15.4](#154-selection--the-poui-gated-committee) | D-0401, D-0439 |
 | 합의 엔진 | BABE 블록 작성 + 스테이크 BFT-DAG **AlephBFT 파이널리티**; `pallet_aleph` 런타임 **인덱스 104**가 `LastFinalized`를 `AlephFinalizedPrefix`에 보고한다 | [2](#2-consensus) | D-0401 |
-| 시빌 비용 / 아이덴티티 | ≥10k FLOP 기본 + 용량 예치금 + 어테스트된 인벤토리 + 활성 갱신형 상한 | [2.4](#24-sybil-model--safety-sub-proof-1) | D-0418, D-0433 |
+| 마이너/검사자 시빌 비용 / 아이덴티티 | ≥10k FLOP 기본 + 용량 예치금 + 어테스트된 인벤토리 + 활성 갱신형 상한 | [2.4](#24-sybil-model--miner-and-checker-identities) | D-0418, D-0433 |
 | 검증자 슬래싱 | 라이브니스 1 %(300 blk 초과 수감) / 장기 다운타임 5 %(24시간 초과 축출); **이중 서명은 상관 기반** — 단독 50 %(180일 후 +50 % 반환) → ≥⅓ 상관 시 100 %; 담합 / 증거 위조 / TEE / 이중 지불 100 % + 퇴출 + 블랙리스트 | [11](#11-security-invariants) / [13.2](#132-validator-consensus--da--leader-duties) | D-0409, D-0420 |
 | 언본딩 슬래시 락 | 세션/분쟁/감사가 열려 있는 동안에는 언본드를 완료할 수 없다; 언락 쿨다운 ≥ 분쟁 윈도우 + 해소 기간(마이너 `[LIVE]`; 검증자 동결 및 마진 구성은 E.57) | [6.1](#61-primitives) / [13](#13-failure-semantics--actor--failure-matrix) | D-0419 |
 | 검증자 로테이션 | [`RotationIntervalBlocks`](#param-validator_rotation_interval_blocks); **스테이크 순**으로, 검증된 작업 + 라이브니스 **최소 성능 하한**에 의해 게이트된다; [퇴출](#param-validators_to_eject)/[승격](#param-validators_to_promote) = 50, [쿨다운](#param-ejection_cooldown_blocks) 약 7일 | [6.1](#61-primitives) / [13.2](#132-validator-consensus--da--leader-duties) | D-0416, D-0409 |

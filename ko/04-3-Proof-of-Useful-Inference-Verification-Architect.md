@@ -44,7 +44,7 @@ flowchart TB
 **`model_hash` 측정.** TEE 세션이 모델을 주장할 때, 로드된 가중치에 대한 커밋먼트는 전달받은 체크섬이 아니라 *측정된* dm-verity 머클 루트여야 **MUST** 한다:
 
 1. 모든 가중치 샤드 + 인덱스 + 설정을 dm-verity 머클 트리(4 KB 블록)를 가진 하나의 읽기 전용 EROFS 이미지로 패킹한다. **루트 해시**가 커밋먼트이다; 커널은 읽기 시 모든 블록을 검증하고 불일치 시 폴트를 발생시키므로, 엔진은 커밋된 가중치만 읽을 수 있다. 재현 가능한 패커는 `[tools/modelpack]`이다.
-2. 마이너 CVM은 루트를 RTMR3로 확장해야(또는 커널 cmdline을 통해 MRTD로 측정해야) **MUST** 하며, 그래야 서명된 쿼트에 나타나고 `report_data`로 흘러 들어간다.
+2. 마이너 CVM은 루트를 TDX 이벤트 로그 항목으로서 RTMR3로 확장해야 **MUST** 하며, 그래야 서명된 쿼트에 나타나고 `report_data`로 흘러 들어간다. 다른 어떤 레지스터나 측정 경로도 수락되지 않는다.
 3. 체인은 `(model, precision)`별 기대 루트를 `pallet_model_registry`에 저장하며, 쿼트의 측정 루트 ∈ 레지스트리인 경우에만 TEE 증명을 **MUST** 수락해야 한다(fail-closed `Vk::V3`; dstack 검증기는 TDX 이벤트 로그를 파싱하고, 이를 쿼트의 RTMR3로 재생(replay)하며, RTMR3 이벤트 중에 레지스트리 루트가 있을 것을 요구한다). 양자화는 바이트를 바꾸고 → 루트를 바꾸므로, 각 정밀도 변형은 별개의 커밋먼트이다(TOPLOC 정밀도 탐지와 일관됨).
 
 **출력 바인딩.** `report_data`는 또한 `output_hash`를 **MUST** 커밋해야 한다; 검증자는 불일치를 **MUST** 거부해야 한다. **디코드 정책 바인딩.** `report_data`는 `decode_policy_hash` — `greedy`/temperature/top-p/top-k/seed와 transform id에 대한 정규(canonical) 다이제스트 — 를 **MUST** 커밋해야 한다. 거버넌스는 레지스트리에서 모델을 허용된 디코드 정책 집합에 고정(pin)**MAY** 할 수 있다(≤ [`max_decode_policies_per_model`](#param-max_decode_policies_per_model)); 고정이 없으면 정책 롤아웃은 차단되지 않는다. 전체 바인딩 프리이미지(preimage)는 [Appendix F](#appendix-f--message--storage-formats)에 있다.

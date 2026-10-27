@@ -8,7 +8,7 @@ C_effective ≔ C_emp                                                (SOFT)
               min(C_hard, floor(C_ceiling_current · d_hard / 10⁶)) (HARD)
 ```
 
-여기서 `u_min ≔` [`calibration_min_utilization_ppm`](#param-calibration_min_utilization_ppm)이고
+`Σ G_job`은 정수 `G_n` 단위로 검증된 참조 작업량이다; `Δblocks`는 1s 블록 시간축에서 초를 측정하므로, `C_emp`, `C_ceiling`, `C_effective`는 `G_n/s` 단위의 속도이다. 수락된 상한은 작업 베스팅을 위해 `G_n/day` 단위의 `B_p = C_effective · 86,400`도 산출한다. 마이너 스테이킹 어댑터는 용량 스테이크 계수를 적용하기 전에 `B_p`를 86,400 s/day로 나눈다; PoUI 및 세션 적립 게이트는 순간 속도 `C_effective`를 읽는다. 기존의 직접 PoUI 게이트는 증명당 작업 수를 지속 시간 계수 없이 이 속도와 비교한다; 그 차원 불일치는 #1597의 단위 감사에 기록되어 있다. 여기서 `u_min ≔` [`calibration_min_utilization_ppm`](#param-calibration_min_utilization_ppm)이고
 `d_hard ≔` [`calibration_provisional_discount_ppm`](#param-calibration_provisional_discount_ppm)이다.
 `C_effective`는 활성화된 상한이다. `C_hard`는 저장된 HARD 티어 상한이다; 갱신 시 현재의 거버넌스
 인벤토리 상한은 이를 조일 수는 있으나 올릴 수는 없다. 마이너가 `C_emp`를 제안한다; 작업 게이트는 비교 전에
@@ -57,8 +57,9 @@ C_effective ≔ C_emp                                                (SOFT)
 [`calibration_renewal_max_age_blocks`](#param-calibration_renewal_max_age_blocks)보다 오래된 것이어서는
 안 된다. 이들의 집계 검증 작업량은
 `floor(C_effective × max(1, current_block − renewal_trigger) × u_min / 10⁶)`을 **MUST** 충당해야 한다.
-작업 수만으로는 상한을 **MUST NOT** 갱신해서는 안 된다. 갱신은 실측 용량이나 유효 용량 어느 쪽도
-**MUST NOT** 증가시켜서는 안 된다.
+작업 수만으로는 상한을 **MUST NOT** 갱신해서는 안 된다. 각 성공적인 갱신은 해당 갱신 직전에 저장된 값에 비해 실측 용량이나 유효 용량 어느 쪽도
+**MUST NOT** 증가시켜서는 안 된다. 이후 거버넌스 SKU 상한이 올라가더라도 이전 갱신에서 잃은 용량은 복원되지 않는다;
+용량 증가에는 §7.1에 따른 새로운 최초 수락이 필요하다.
 
 수락된 유효 상한은 리스 기간 동안 **MUST** 동결 상태로 유지되어야 한다. 거버넌스에 의한 SKU 상한 변경은
 이미 수락된 상한을 **MUST NOT** 조용히 변경하거나 비활성화해서는 안 된다. 변경된 상한은 다음 버전
@@ -101,7 +102,8 @@ C_effective ≔ C_emp                                                (SOFT)
 은 초기 작업 게이트에는 실측 상한을, 본딩과 갱신에는 티어에 따라 달라지는 유효 상한을 사용한다. 거버넌스
 하한값에서 600 블록 동안 64 jobs × 1,000 G는 최대 `C_emp = 213`까지 허용한다; 요구 작업량은 63,900 G이므로
 64,000 G는 통과한다. 가격 산정된 마이너 BOM:
-validator-miner-hardware-costs.md. SDC/드리프트 탐지기
+validator-miner-hardware-costs.md,
+gn-unit-audit.md. SDC/드리프트 탐지기
 문헌: arXiv:2502.12340, arXiv:2605.04213, arXiv:2604.10390. 형식 검증:
 `FlopSpecs/CalibrationFastPath.lean`,
 `FlopSpecs/CalibrationDrift.lean`,

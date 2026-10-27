@@ -53,12 +53,12 @@
 | 85 | `has_station` | HTLC + 조건부(predicate) 에스크로(§10) |
 | 86 | `flop_poui` | PoUI 증명 검증, 검증자 어테스테이션, `flop_meter`(§3.6, §4) |
 | 87 | `hw_calibration` | 집계 호스트 캘리브레이션 상한 + 갱신 가능한 리스(§7) |
-| 88 · 91 | `work_vesting` · `airdrop_vesting` | `R_p²` 성능 베스팅(§8) · 에어드롭 베스팅(§9) |
+| 88 · 91 | `work_vesting` · `airdrop_vesting` | `R_p²` 성능 베스팅(§8) · 에어드롭 베스팅(§8.2) |
 | 89 | `synthetic_tasks` | 고스트 태스크 — 라이브니스 + 정확성 카나리(§8.1) |
 | 90 | `attest` | 공유 어테스테이션 프로파일 레지스트리(§3.6) |
 | 92 · 93 | `block_rewards` · `flop_subsidy` | 발행 분배(§9) · 0기(era-0) Labs/재단 보조금(§9) |
 | 94 · 95 · 106 | `session_keys` · `agent_wallet` · `agent_identity` | 에이전트 위임 + 상한 + 회로 차단기(§6.2) |
-| 96 · 97 · 98 · 100 | `validators` · `miner_staking` · `delegation_cap` · `miner_slashing` | 검증자 권한 + 로테이션 + 슬래싱(§15); 마이너 스테이크 + 위임 상한 + 슬래싱(§6.1, §11) |
+| 96 · 97 · 98 · 100 | `validators` · `miner_staking` · `delegation_cap` · `miner_slashing` | 검증자 권한 + 로테이션 + 슬래싱(§15); 마이너 자기 스테이크 + 슬래싱(§6.1, §11; `delegation_cap`과 `miner_staking::delegate`는 D-0530에 따라 폐기됨) |
 | 101 · 102 · 103 | `model_registry` · `da_registry` · `compute_channel` | 측정 루트 + 디코드 정책 핀 고정(§3.3); 소버린 DA(§5.3); 세션(§12) |
 | 107 | `metering_verifier` | 미터링 인증서 검증(§4, E.34) |
 

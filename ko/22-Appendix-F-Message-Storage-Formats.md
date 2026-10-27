@@ -8,6 +8,12 @@
 `uv run --script evidence/generate-wire-format-vectors.py [--check]`로 하며, Rust, TypeScript, Python 테스트가
 모두 동일한 파일을 사용한다.
 
+**근거와 출처.** 이 코퍼스는 와이어 포맷 적합성만 검사한다. 부록 F는 자금 경로(money-path) 적합성을
+충족시키지 않는다. 금액 전이는 별도의
+[`money-path-v1` 코퍼스와 커버리지 노트](evidence/money-path-v1.md)를 둔다. 반영된 케이스는 옐로페이퍼 커밋과
+결정 ID를 고정하고 팰릿 러너를 통해 잔액, 이벤트, 스토리지를 검사한다. 미해결 지급 대안은 각 결정 담당자
+아래에서 보류 상태로 남는다.
+
 ### F.0 코덱과 거부 프로파일
 
 - 고정 부호 없는 정수는 정확히 `u8`/`u16`/`u32`/`u64`/`u128`이며 리틀 엔디언이다. 인코더는 음수 또는
@@ -57,18 +63,25 @@
 
 | 구조 | 필드 | 제약 |
 |-----------|--------|-----------|
+| `SettlementClass` | `Standard=0`, `CertificatePremium=1` | `open_channel`이 선택하고 고정한다. `force_open`은 `Standard`를 함의한다. `CertificatePremium`은 인증서 기반 정산을 활성화한다. 알 수 없는 태그는 F.0에 따라 거부 |
+| `SessionEvidenceSlot` | `Activation(u32)=0`, `Transcript=1` | 채널별 불변 DA 할당. 활성화 인덱스는 SLA max_turns 미만. 알 수 없는 태그는 거부 |
 | `TranscriptLeafVersion` | `V0=0`, `V1=1`, `V2=2`, `V3=3` | 현재의 모든 정산/분쟁 턴 컨테이너 시작부의 필수 SCALE 열거형(enum). 알 수 없는 태그는 거부한다. 검증기는 정확히 하나의 프리이미지를 선택하며 결코 재시도하지 않는다 |
 | `VerifiedTurn` | 순서대로: `leaf_version`, `turn_index:u32`, `h_in:H256`, `h_out:H256`, `g_n:u128`, `decode_policy_hash:H256`, `h_ids:H256`, `toploc_commitment_hash:H256`, `miner_recv_ms:u64`, `miner_done_ms:u64`, `latency_ms:u64`, `enclave_sig:[u8;64]`, `merkle_path:Vec<(H256,bool)>` | 경로 길이 `L`에 대해 SCALE 크기 `269 + compact_len(L) + 33L` B |
+| `h_ids` v1 | `prompt_ids:u32[]`, `generated_ids:u32[]` | `blake2_256(prompt_count:u32LE ‖ prompt_ids:u32LE… ‖ generated_count:u32LE ‖ generated_ids:u32LE…)`. 두 개수는 모두 SCALE `Compact`가 아닌 고정 폭 `u32LE`이며, 각 토큰 ID는 `u32LE`이다 |
 | V3 리프 | `blake2_256(channel_id ‖ turn_index:u32LE ‖ h_in ‖ h_out ‖ g_n:u128LE ‖ decode_policy_hash ‖ h_ids ‖ toploc_commitment_hash ‖ miner_recv_ms:u64LE ‖ miner_done_ms:u64LE ‖ latency_ms:u64LE)` | 236 B 프리이미지. 서명은 32 B 리프 해시에 대한 것이다. FCC4에서 `h_ids`는 MUST 0이 아니어야 한다 |
 | V2 리프 | `h_ids`와 `toploc_commitment_hash`가 없는 V3 | 172 B 프리이미지. 디코드 정책을 바인딩하지만 V3의 토큰 ID/TOPLOC 바인딩은 주장하지 않는다(#1404) |
 | V1 리프 | `decode_policy_hash`가 없는 V2 | 140 B 프리이미지. 채널에 `ChannelDecodePolicies` 마커가 없는 경우에만 레거시로 허용된다(#686) |
 | V0 리프 | 세 개의 타이밍 필드가 없는 V1 | 116 B 프리이미지. 채널에 `ChannelDecodePolicies` 마커가 없는 경우에만 레거시로 허용된다 |
 | 머클 경로 | 각 항목은 `(sibling_hash:H256, sibling_is_left:bool)`. 노드 = `blake2_256(left ‖ right)` | 리프 순서는 턴 순서다. 왼쪽이 먼저다. 홀수인 마지막 노드는 복제된다. 빈 루트는 `00×32`다. 단일 리프 루트는 그 리프다. 노드의 64 B 프리이미지는 모든 리프 프리이미지와 길이가 서로 겹치지 않으므로 노드에는 접두사가 없다 |
 | 턴별 에이전트 확인(ack) | 채널의 에이전트 키로 `channel_id ‖ turn_index:u32LE ‖ leaf_hash ‖ agent_send_ms:u64LE ‖ agent_recv_ms:u64LE`에 대해 서명한 sr25519 | 리프 해시와 두 타이밍 입력에 대해 역서명(counter-sign)한다. 에이전트 영수증 v1과는 별개다. `sdk/typescript/src/compute-channel/transcript.ts`와 `sdk/rust-compute-channel/src/transcript.rs`의 `turn_ack_message`로 구현된다 |
-| 에이전트 영수증 v1 | `"FLOP/COMPUTE_CHANNEL/RECEIPT" ‖ 01 ‖ channel_id ‖ final_root ‖ aggregate_gn:u128LE ‖ payable:u128LE`에 대한 sr25519 | 정확한 채널, 루트, 집계, 정산 금액을 인가한다. `payable`은 10⁻¹⁸ FLOP 기본 단위 개수를 나타내는 `u128LE`이며, 감사 및 선도(forward) 조정 이전의 영수증 바인딩 총 정산 금액이다. 협력적 `settle`에서는 예약된 에스크로 전액, `force_settle`에서는 R12.1d 요율 `P`, 선도 채널에서는 저장된 `contract_payment` 재정의 값으로 파생된다(R12.1i). 마이너에게 가는 순이전액은 `payable`에서 감사 적립분(earmark)을 뺀 값이며, 선도 채널은 추가로 미획득 가용성 대금을 구매자에게 환불한다. 현재 채널에만 해당 |
+| 에이전트 영수증 v1 | `"FLOP/COMPUTE_CHANNEL/RECEIPT" ‖ 01 ‖ channel_id ‖ final_root ‖ aggregate_gn:u128LE ‖ payable:u128LE`에 대한 sr25519 | 정확한 채널, 루트, 집계, 정산 금액을 인가한다. `payable`은 10⁻¹⁸ FLOP 기본 단위 개수를 나타내는 `u128LE`이며, 영수증 바인딩 총 정산 금액이다. 협력적 `settle`에서는 예약된 에스크로 전액, `force_settle`에서는 R12.1d 요율 `P`, 선도(forward) 채널에서는 저장된 `contract_payment` 재정의 값으로 파생된다(R12.1i). 정산 시 `payable`은 마이너에게 85%([`inference_fee_miner_share_ppt`](#param-inference_fee_miner_share_ppt)), 검증자에게 15%([`inference_fee_validator_share_ppt`](#param-inference_fee_validator_share_ppt))로 분할되며, 1% 감사 적립분(earmark, [`audit_fee_split_ppm`](#param-audit_fee_split_ppm))은 후자에서 충당된다(D-0525). 선도 채널은 추가로 미획득 가용성 대금을 구매자에게 환불한다. 현재 채널에만 해당 |
 | `aggregate_gn` 검사 | 서명/경로 검증 이후 제출된 서로 다른 `VerifiedTurn.g_n`의 검사된 합(`verified_work_from_turns`) | `aggregate_gn`과 MUST 같아야 한다. 산술/인증만 해당(§11.2 R11.2a) |
 | 번들 한계 | ≤ [`channel_max_settlement_turns`](#param-channel_max_settlement_turns) 턴. 경로 ≤ [`channel_max_merkle_path_len`](#param-channel_max_merkle_path_len) | — |
 | `ChallengeWindowExtensions` | `channel_id:H256 → extensions:u8` | 채널별 DA 저하 시 기한 연장 횟수로, 최대 1이다(R13.0b). 단 한 번의 연장은 현재 진행 중인 챌린지 또는 응답 기한에 [`channel_dispute_response_window_blocks`](#param-channel_dispute_response_window_blocks)를 더하며, 채널이 닫힐 때 초기화된다 |
+
+`SettlementClass`는 정산 의미론을 선택하는 것이며 HARD/SOFT 보증 티어가 아니다. 후자는 협력적
+`open_channel` 또는 퍼미션리스 `force_ack` 시점에 포착되는 별도의 마이너 캘리브레이션 스냅숏이다. 어느 경로에서든
+제공되는 `enclave_key` 인자는 세션 서명 키이며, 팰릿은 그 키의 TEE 출처를 검증하거나 함의하지 않는다.
 
 **R12.1i — 영수증 `payable`.** 검증은 에이전트 영수증 v1의 `payable`을 위 행이 정의하는 대로
 채널 상태와 정산 경로로부터 **MUST** 파생해야 한다.
@@ -79,7 +92,8 @@ V0–V3을 수락한다. `ChannelWireProfiles[channel_id]=1`은 영수증 v1을 
 태그 없는 96 B 영수증 프리이미지만 수락하며, 알 수 없는 값은 실패 폐쇄(fail closed)한다. 신규 개설은
 디코드 정책 마커와 와이어 프로파일 마커를 기록한다. 기존 채널
 레코드와 금액은 재작성되지 않는다. V2는 명시적으로 더 낮은 증거 포맷으로 남으며 V3/TOPLOC 바인딩
-보증으로 보고되어서는 **MUST NOT** 안 된다. 남아 있는 그 수락을 제거하거나 바인딩을 추가하는 일은 #1404이 담당한다.
+보증으로 보고되어서는 **MUST NOT** 안 된다. SDK 호스트는 TOPLOC을 담은 V2 리프를 거부한다(#1404). 런타임에 남아 있는
+그 수락을 제거하거나 바인딩을 추가하는 일은 결정 #1594의 소관이다.
 
 **R12.1j — 채널별 디코드 정책.** 개설 시 `ChannelDecodePolicies[channel_id]`는 하나의
 `decode_policy_hash`를 핀 고정한다. 그 해시는 파이프라인에 참여하는 에이전트 수와 관계없이 해당 `channel_id` 아래의
@@ -139,8 +153,8 @@ turn_index:u32LE ‖ leaf_hash ‖ send:u64LE ‖ receive:u64LE`에 서명한 �
 |---|---|---|
 | `EpochTariff`(온체인) | 에포크, 인코딩된 바이트 블록당 임대료 분자/분모, 제공자별 쓰기당 설정 수수료, 바이트당 회수 분자/분모, 요청 수수료, 이전 요율, 적용된 스텝 한계, 거버넌스 하한/상한 버전, 선언자 수 및 선언/여유 용량, 트립와이어 카운터 | 선언자 투표의 스테이크 가중 중앙값. 스텝 한계 이내. 에포크이 시작되면 불변 |
 | `CapacityDeclaration`(온체인) | 제공자, 에포크, 제공 인코딩 바이트, 배정 인코딩 바이트, 예약된 담보, 투표 | 배정에 대한 동의. 용량과 담보는 동시 의무 간에 재사용되지 않음. 투표는 선언이 있을 때만 집계됨 |
-| `CapacityReservation`(온체인) | 예약 ID, 지불자, 요율 버전, 제공자별 예약 인코딩 바이트, 배정 이력/세대, 활성화/종료, 에스크로, 제공자별 누적 임대료 카운터와 구간 예산, 네임스페이스 수, 이전 이력, 종료 사유, 담보 예약과 유보된 임대료, 상태, 청구 기한 | 보존성. 테이크 오어 페이(take-or-pay). 기간당 지불자별 하나. 장애 청구 우선. 과금 대상 배정의 중첩 없음 |
-| `ServiceLane`(온체인) | 지불자, 제공자, 예약, 레인 논스, 요율 버전, 고정 예산, 상환된 쓰기/바이트/요청/금액, 정책 에포크, 종료 경계, 청구 기한, 상태 | 레인 예산은 보유 자금을 분할한다. 누적 카운터 집합당 하나의 요율. 모든 네임스페이스와 위임 대리인이 공유. 유효한 청구가 만료되기 전에는 환불 없음 |
+| `CapacityReservation`(온체인) | 예약 ID, 지불자, 슬롯별 예약 인코딩 바이트, 슬롯 보유자와 기간 내 위치 경계를 포함한 배정 이력/세대, 활성화/종료, 에스크로, 슬롯별 자금 트랜치(시작, 길이, 고정된 요율, 상한 예산), 적립된 구간 위치와 과거 제공자 수급권, 네임스페이스 수, 이전 이력, 종료 사유, 담보 예약과 유보된 임대료, 상태, 청구 기한 | 슬롯/트랜치별 보존성. R5.4f 위치 델타. 실패/몰수된 델타는 지불자에게 환불. 테이크 오어 페이(take-or-pay). 기간당 지불자별 하나. 장애 청구 우선. 과금 대상 배정의 중첩 없음 |
+| `ServiceLane`(온체인) | 지불자, 제공자, 예약, 레인 논스, 요율 버전, 고정 예산, 상환된 시퀀스/쓰기/바이트/요청/금액, 정책 에포크, 블록 단위로 고정된 청구 윈도, 종료 경계, 청구 기한, 상태 | 레인 예산은 보유 자금을 분할한다. 누적 카운터 집합당 하나의 요율. 모든 네임스페이스와 위임 대리인이 공유. 고정된 종료 경계와 확정 접두부(finalized-prefix) 기한. 유효한 청구가 만료되기 전에는 환불 없음. 식별자는 결코 재사용되지 않음. 제공자 재배정 시에도 청구는 보존됨 |
 | `ProviderCheckpoint`(온체인) | 제공자, 에포크, (네임스페이스 → 매니페스트 루트, 헤드 루트, 시퀀스)에 대한 루트, 누적 카운터 커밋먼트, 서명 | 에포크당 제공자별 하나. 유예 기간 이후 누락되거나 영수증과 충돌하면 장애다. 포함 증명은 클라이언트가 검증 가능 |
 | `NamespaceManifest`(오프체인, 제공자 그룹) | 예약 ID, 네임스페이스, 시퀀스, 객체, 헤드, 툼스톤, 라이브 인코딩 바이트, 시퀀서 세대, 쿼럼 영수증 | 세대 순서 시퀀서가 순서를 매김. 모든 항목에 쿼럼 영수증. 루트는 각 제공자의 체크포인트에 커밋됨 |
 | `PaidObject`(매니페스트 항목) | 네임스페이스, 불투명 객체 ID, 버전, 소유자, 페이로드 커밋먼트/길이, 선언된 암호/청크 엔벨로프 프로파일, 코덱 프로파일, 샤드 커밋먼트 루트, 비공개 매니페스트 커밋먼트, 보관(custody) 영수증, 설정 수수료 지급 플래그, 상태 | 불변의 불투명 페이로드. 한계가 있는 엔벨로프. 예약의 여유 바이트에 맞아야 함. 클라이언트는 평문 이름, 내용, 키를 오프체인에 둔다. 어드미션은 암호화나 비밀성을 증명하지 않음 |
